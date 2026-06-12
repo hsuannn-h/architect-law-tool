@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2C2820">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="法規備考">
+<link rel="manifest" href="./manifest.json">
+<title>法規備考地圖</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --A-bg:#FDF0EE;--A-bd:#C83828;--A-tx:#A82E20;--A-lx:#FAE2DC;
+  --B-bg:#FEF8E6;--B-bd:#B88000;--B-tx:#886000;--B-lx:#FAF0C0;
+  --C-bg:#EAF5F5;--C-bd:#1E7878;--C-tx:#145858;--C-lx:#D2ECEC;
+  --D-bg:#F4F3F0;--D-bd:#747468;--D-tx:#4C4C48;--D-lx:#E8E6E0;
+  --page:#FAFAF8;--text:#2C2820;--text2:#908878;--text3:#B0A898;
+  --border:#C8C5B0;
+  --s0-c:#C8C5B0;--s0-t:#888;
+  --s1-c:#5A7A9A;--s1-bg:#EEF3F8;
+  --s2-c:#4A7040;--s2-bg:#EEF5F0;
+  --s3-c:#B88000;--s3-bg:#FEF8E6;
+  --err-c:#C83828;--err-bg:#FEF0EE;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+html,body{background:var(--page);color:var(--text);font-family:'Hiragino Sans','Yu Gothic','PingFang TC',system-ui,sans-serif;font-size:14px;line-height:1.5}
+
+/* ── Header ── */
+#hdr{position:sticky;top:0;z-index:50;background:rgba(250,250,248,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:calc(var(--safe-t)+8px) 14px 8px;border-bottom:.5px solid rgba(0,0,0,.07)}
+.hdr-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px}
+.hdr-title{font-size:15px;font-weight:600;letter-spacing:.02em}
+.hdr-sub{font-size:10px;color:var(--text2);margin-top:1px;line-height:1.4}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;margin-bottom:7px}
+.tab{flex:1;padding:5px 4px;border-radius:6px;border:.5px solid var(--border);background:transparent;font-size:11px;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
+.tab.on{background:#2C2820;color:#FAF9F7;border-color:#2C2820;font-weight:500}
+.tab-sprint.on{background:#C83828;border-color:#C83828}
+
+/* ── Filter pills ── */
+.filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.fpill{padding:3px 9px;border-radius:10px;border:.5px solid var(--border);background:transparent;font-size:10.5px;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.fpill.on{font-weight:600}
+.fpill-err.on{background:var(--err-bg);border-color:var(--err-c);color:var(--err-c)}
+.fpill-A.on{background:var(--A-lx);border-color:var(--A-bd);color:var(--A-tx)}
+.fpill-rise.on{background:#FEF8E6;border-color:#B88000;color:#886000}
+.fpill-unread.on{background:#F0EDE8;border-color:#9A9880;color:#4C4C48}
+.fpill-unfin.on{background:var(--s1-bg);border-color:var(--s1-c);color:var(--s1-c)}
+
+/* ── Progress ── */
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px}
+.chip{display:flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10.5px;border:.5px solid transparent}
+.sbar{height:4px;border-radius:2px;overflow:hidden;display:flex;margin-bottom:2px}
+.sbar-seg{height:4px;transition:width .4s}
+.pbar2{height:3px;border-radius:2px;background:#E5E2DA;overflow:hidden;margin-bottom:2px}
+.pfill2{height:3px;background:var(--s2-c);transition:width .4s}
+.plbl{display:flex;justify-content:space-between;font-size:9.5px;color:var(--text3)}
+
+/* ── Body ── */
+#body{padding:10px 14px calc(var(--safe-b)+20px)}
+.wrap{max-width:680px;margin:0 auto}
+
+/* ── Sections (grade groups) ── */
+.sect{margin-bottom:5px;border-radius:8px;overflow:hidden;border:.5px solid rgba(0,0,0,.06)}
+.sect-hd{display:flex;align-items:center;gap:6px;padding:8px 12px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.caret{font-size:10px;opacity:.4;transition:transform .2s;flex-shrink:0}
+.sect-body{border-top:.5px solid rgba(0,0,0,.06)}
+
+/* ── Law row ── */
+.lrow{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:.5px solid rgba(0,0,0,.04)}
+.lrow:last-child{border-bottom:none}
+
+/* ── Group cards ── */
+.gcard{margin-bottom:8px;border-radius:8px;overflow:hidden;border:.5px solid #D8D4CC}
+.ghd{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#F4F2EE;cursor:pointer;user-select:none;-webkit-user-select:none}
+.gbody{border-top:.5px solid #D8D4CC}
+.grow{display:flex;align-items:center;gap:6px;padding:7px 12px;border-bottom:.5px solid rgba(0,0,0,.04)}
+.grow:last-child{border-bottom:none}
+
+/* ── Chapter header ── */
+.chd{padding:5px 12px 3px;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--text3);background:rgba(0,0,0,.02);border-top:.5px solid rgba(0,0,0,.05)}
+.chd:first-child{border-top:none}
+
+/* ── Topic row ── */
+.trow{padding:7px 12px;border-bottom:.5px solid rgba(0,0,0,.04)}
+.trow:last-child{border-bottom:none}
+.trow-top{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.trow-bot{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* ── Stage button (4 stages) ── */
+.stg{min-width:56px;padding:2px 7px;border-radius:10px;border:1.5px solid;cursor:pointer;font-size:10.5px;font-weight:600;font-family:inherit;transition:all .15s;text-align:center;flex-shrink:0}
+.s0{border-color:var(--s0-c);color:var(--s0-t);background:transparent}
+.s1{border-color:var(--s1-c);color:var(--s1-c);background:var(--s1-bg)}
+.s2{border-color:var(--s2-c);color:var(--s2-c);background:var(--s2-bg)}
+.s3{border-color:var(--s3-c);color:var(--s3-c);background:var(--s3-bg)}
+
+/* ── Error flag ── */
+.eflag{width:26px;height:26px;border-radius:50%;border:1.5px solid;cursor:pointer;font-size:11px;font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.eflag.off{border-color:var(--border);color:var(--text3);background:transparent}
+.eflag.on{border-color:var(--err-c);color:var(--err-c);background:var(--err-bg)}
+
+/* ── Avg badge ── */
+.avgb{font-size:10px;padding:1.5px 7px;border-radius:8px;border:.5px solid;font-weight:500;white-space:nowrap;flex-shrink:0;letter-spacing:.01em}
+
+/* ── Grade badge ── */
+.badge{font-size:10.5px;font-weight:700;padding:1.5px 6px;border-radius:3px;letter-spacing:.04em;flex-shrink:0;white-space:nowrap}
+
+/* ── Year dots ── */
+.ydots{display:flex;gap:2px;align-items:center}
+.ydot{width:6px;height:6px;border-radius:50%;flex-shrink:0;cursor:default}
+.ylbl{font-size:9px;color:var(--text3);margin-right:1px;white-space:nowrap}
+
+/* ── Exam question preview ── */
+.sq-toggle{font-size:10px;color:var(--text2);background:none;border:.5px solid var(--border);border-radius:9px;padding:1px 7px;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap}
+.sq-block{margin-top:5px;padding:7px 10px;background:#F6F4F0;border-radius:6px;border-left:2.5px solid var(--border)}
+.sq-item{font-size:11px;color:var(--text);line-height:1.55;display:grid;grid-template-columns:auto 1fr;gap:6px;padding:2px 0}
+.sq-item+.sq-item{border-top:.5px solid rgba(0,0,0,.06);margin-top:3px;padding-top:5px}
+.sq-meta{font-size:10px;color:var(--text2);font-weight:600;white-space:nowrap;padding-top:1px}
+
+/* ── Checkbox ── */
+.chk{width:15px;height:15px;min-width:15px;border-radius:3px;border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .14s;flex-shrink:0}
+
+/* ── Tag ── */
+.tag{font-size:9.5px;padding:1px 5px;border-radius:8px;white-space:nowrap;flex-shrink:0}
+
+/* ── Breadcrumb ── */
+.bc{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#F4F2EE;border-radius:6px;border:.5px solid var(--border);margin-bottom:10px;flex-wrap:wrap}
+
+/* ── Hint ── */
+.hint{font-size:11px;color:var(--text2);background:#F4F2EE;border:.5px dashed var(--border);border-radius:6px;padding:7px 11px;margin-bottom:10px;line-height:1.7}
+
+/* ── Stage legend ── */
+.sleg{display:flex;gap:6px;flex-wrap:wrap;font-size:10px;color:var(--text2);margin-bottom:10px}
+
+/* ── Sprint mode ── */
+.sprint-hd{background:linear-gradient(135deg,#FDF0EE,#FEF8E6);border:.5px solid var(--A-bd)30;border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.sprint-empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;line-height:1.8}
+.sprint-row{display:flex;align-items:center;gap:6px;padding:7px 12px;border-bottom:.5px solid rgba(0,0,0,.04)}
+.sprint-row:last-child{border-bottom:none}
+.sprint-law-label{font-size:10px;font-weight:600;color:var(--text3);padding:4px 12px 2px;background:rgba(0,0,0,.025);border-top:.5px solid rgba(0,0,0,.05)}
+
+/* ── Buttons ── */
+.bsm{font-size:11px;padding:3px 9px;border-radius:4px;border:.5px solid;background:transparent;cursor:pointer;white-space:nowrap;font-family:inherit}
+.brst{background:none;border:none;font-size:11px;color:var(--text3);cursor:pointer;padding:0;font-family:inherit}
+
+/* ── Footer ── */
+#footer{text-align:right;padding:16px 18px calc(var(--safe-b)+14px);margin-top:4px}
+.sig{font-family:'Brush Script MT','Segoe Script','Dancing Script',cursive;font-size:20px;color:#2C2820;opacity:.32;letter-spacing:.06em;font-style:italic;display:inline-block}
+
+/* ── Export modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;padding:16px;overflow-y:auto}
+.modal-card{max-width:600px;margin:0 auto;background:#FFF;border-radius:12px;padding:20px}
+
+/* ── Fade ── */
+.faded{opacity:.48}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:#C8C3B0;border-radius:2px}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.anim{animation:fi .13s ease}
+
+/* ── Print ── */
+@media print{
+  #hdr{position:static;border-bottom:.5px solid #ccc;padding:10px 14px}
+  .tabs,.filters,.brst,.bsm,.stg,.eflag,.chk,.sq-toggle,#footer-btns{display:none!important}
+  #footer{display:block!important}
+  .sig{opacity:.5}
+  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sect,.gcard,.trow,.lrow{break-inside:avoid}
+  .badge,.avgb{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div class="wrap">
+    <div class="hdr-top">
+      <div>
+        <div class="hdr-title">法規備考地圖</div>
+        <div class="hdr-sub">近10年校正版 · 雙權重分級（10年×60%＋近3年×40%）· ⚠易錯flag · Sprint</div>
+      </div>
+      <button class="brst" onclick="confirmReset()">重置</button>
+    </div>
+    <div class="tabs">
+      <button class="tab on" id="t-freq" onclick="setView('freq')">📊 頻率</button>
+      <button class="tab" id="t-grp"  onclick="setView('grp')">📚 群組</button>
+      <button class="tab tab-sprint" id="t-sprint" onclick="setView('sprint')">⚡ 考前Sprint</button>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="chips" id="chips"></div>
+    <div class="sbar" id="sbar"></div>
+    <div class="pbar2"><div class="pfill2" id="pb2"></div></div>
+    <div class="plbl"><span id="pl1"></span><span id="pl2"></span></div>
+  </div>
+</div>
+
+<div id="body"><div class="wrap" id="main"></div></div>
+
+<div id="footer">
+  <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <div id="footer-btns" style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="bsm" style="border-color:var(--border);color:var(--text2)" onclick="window.print()">🖨 列印</button>
+      <button class="bsm" style="border-color:var(--border);color:var(--text2)" onclick="exportProgress()">📋 匯出進度</button>
+      <button class="bsm" style="border-color:var(--s2-c);color:var(--s2-c)" onclick="openJsonExport()">💾 備份進度</button>
+      <button class="bsm" style="border-color:var(--s1-c);color:var(--s1-c)" onclick="openJsonImport()">📲 還原進度</button>
+    </div>
+    <span class="sig">Hsuannn</span>
+  </div>
+</div>
+
+<!-- Export modal -->
+<div class="modal-overlay" id="exp-modal">
+  <div class="modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:15px;font-weight:600">匯出學習進度</span>
+      <button onclick="closeExport()" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px">Notion 相容 Markdown，可直接貼入 Notion 作為學習記錄</div>
+    <textarea id="exp-text" readonly style="width:100%;height:300px;font-family:monospace;font-size:11px;line-height:1.6;padding:10px;border:.5px solid var(--border);border-radius:6px;resize:none;background:#F6F4F0;color:var(--text)"></textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <button onclick="copyExport()" id="exp-copy" class="bsm" style="border-color:var(--s2-c);color:var(--s2-c);padding:7px 16px;font-size:13px">複製全部</button>
+    </div>
+  </div>
+</div>
+
+<!-- JSON 備份 modal -->
+<div class="modal-overlay" id="json-exp-modal">
+  <div class="modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:15px;font-weight:600">💾 備份進度 JSON</span>
+      <button onclick="document.getElementById('json-exp-modal').style.display='none'" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px;line-height:1.7">
+      複製下方全部文字，存到記事本或用訊息傳給自己。<br>
+      換裝置時點「還原進度」貼回即可同步。
+    </div>
+    <textarea id="json-exp-text" readonly style="width:100%;height:200px;font-family:monospace;font-size:10.5px;line-height:1.5;padding:10px;border:.5px solid var(--border);border-radius:6px;resize:none;background:#F6F4F0;color:var(--text)"></textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <button onclick="copyJsonExport()" id="json-exp-copy" class="bsm" style="border-color:var(--s2-c);color:var(--s2-c);padding:7px 16px;font-size:13px">複製全部</button>
+    </div>
+  </div>
+</div>
+
+<!-- JSON 還原 modal -->
+<div class="modal-overlay" id="json-imp-modal">
+  <div class="modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:15px;font-weight:600">📲 還原進度 JSON</span>
+      <button onclick="document.getElementById('json-imp-modal').style.display='none'" style="background:none;border:none;font-size:18px;color:var(--text2);cursor:pointer">✕</button>
+    </div>
+    <div style="font-size:11.5px;color:var(--text2);margin-bottom:10px;line-height:1.7">
+      將備份的 JSON 文字貼到下方，點「確認還原」。<br>
+      <span style="color:var(--err-c);font-weight:600">⚠ 目前裝置的進度會被覆蓋，請確認後再操作。</span>
+    </div>
+    <textarea id="json-imp-text" placeholder="貼上備份的 JSON 文字…" style="width:100%;height:200px;font-family:monospace;font-size:10.5px;line-height:1.5;padding:10px;border:.5px solid var(--border);border-radius:6px;resize:none;background:#FAFAF8;color:var(--text)"></textarea>
+    <div id="json-imp-err" style="font-size:11px;color:var(--err-c);margin-top:6px;min-height:16px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+      <button onclick="document.getElementById('json-imp-modal').style.display='none'" class="bsm" style="border-color:var(--border);color:var(--text2);padding:7px 14px;font-size:13px">取消</button>
+      <button onclick="doJsonImport()" class="bsm" style="border-color:var(--s1-c);color:var(--s1-c);padding:7px 16px;font-size:13px;font-weight:600">確認還原</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LAWS = [{"name":"建築技術規則施工編","grade":"A","avg":23.6,"avg3":23.0,"trend":"up","total":236,"readMin":120,"group":"建築技術規則三編","topics":[{"name":"第一章 用語定義｜第1條第5款 樓地板面積","avg":9.1,"avg3":11.0,"count":91,"grade":"A","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第22題｜依建築技術規則規定，建築物之居室應設置採光用窗或開口，其採光面積或有效採光面積規定，下列 何者錯誤？ 養老院之居室不得小於樓地板面積八分之一 學校教室不得小於樓地板面積五…","114年 第23題｜依建築技術規則規定，下列何者不屬於應為防火構造建築物之範圍？ 建築物為 1 層樓，總樓地板面積為 1500 平方公尺的倉庫 建築物為 3 層樓的社區活動中心 建築物為 2…"]},{"name":"第一章 用語定義｜第1條第7款 總樓地板面積","avg":3.4,"avg3":3.7,"count":34,"grade":"A","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第23題｜依建築技術規則規定，下列何者不屬於應為防火構造建築物之範圍？ 建築物為 1 層樓，總樓地板面積為 1500 平方公尺的倉庫 建築物為 3 層樓的社區活動中心 建築物為 2…","114年 第27題｜依建築技術規則有關基地內通路之規定，下列敘述何者錯誤？ 以基地內通路為進出道路之建築物，其總樓地板面積合計在 1000 平方公尺以上者，通路寬度為 6 公尺 基地內各棟建…"]},{"name":"第四章 防火避難設施｜第85–88條 防火區劃","avg":3.2,"avg3":4.0,"count":32,"grade":"A","trend":"flat","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第33題｜依建築技術規則規定，高層建築物設有燃氣設備時，應將燃氣設備集中設置，並設置瓦斯漏氣自動警 報設備，且與其他部分應以至少多少小時以上防火時效之牆壁、防火門窗等防火設備及該層…","114年 第40題｜依建築技術規則地下建築物之規定，供地下使用單元使用之總樓地板面積為 3500 平方公尺時，最多 應按每多少平方公尺，以具有 1 小時以上防火時效之牆壁、防火門窗等防火設備…"]},{"name":"第一章 用語定義｜第1條第31款 防火時效","avg":2.7,"avg3":3.0,"count":27,"grade":"B","trend":"flat","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第33題｜依建築技術規則規定，高層建築物設有燃氣設備時，應將燃氣設備集中設置，並設置瓦斯漏氣自動警 報設備，且與其他部分應以至少多少小時以上防火時效之牆壁、防火門窗等防火設備及該層…","114年 第40題｜依建築技術規則地下建築物之規定，供地下使用單元使用之總樓地板面積為 3500 平方公尺時，最多 應按每多少平方公尺，以具有 1 小時以上防火時效之牆壁、防火門窗等防火設備…"]},{"name":"第三章 停車空間｜第59–62條","avg":3.1,"avg3":2.0,"count":31,"grade":"B","trend":"up","yrs":[1,1,1,1,1,0,1,1,1,1],"sq":["114年 第12題｜依建築物使用類組及變更使用辦法規定，有關變更使用執照相關期限，下列敘述何者錯誤？ 建築物申請變更使用經主管建築機關審查合格後，其須施工者，發給同意變更文件時應核定施工期 …","114年 第32題｜依建築技術規則，有關無障礙設施之規定，下列敘述何者錯誤？ 建築物依相關法令規定免裝設衛生設備者，除使用類組為 H-2 組住宅或集合住宅外，仍應於每戶內 設置至少 1 處無…"]},{"name":"第一章 用語定義｜第1條第9款 建築物高度","avg":2.6,"avg3":2.3,"count":26,"grade":"B","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第21題｜建築技術規則所稱建築物高度，指自基地地面計量至建築物最高部分之垂直高度，但部分項目得免計 入。有關不計入建築物高度之項目，下列敘述何者錯誤？ 女兒牆高度 1.5 公尺 水…","114年 第63題｜依營造業法施行細則規定，某營造廠欲承攬下列何種規模之工程，應置工地主任？ 承攬金額新臺幣 4000 萬元之工程 建築物高度 32 公尺之工程 建築物地下室開挖 12 公尺…"]},{"name":"第一章 用語定義｜第1條第3款 建築面積","avg":1.8,"avg3":3.0,"count":18,"grade":"B","trend":"up","yrs":[1,1,1,1,0,1,0,1,1,1],"sq":["114年 第80題｜在非離島地區申請興建個別農舍，下列敘述何者不符農業用地興建農舍辦法之規定？ 興建之農舍，得免設置建築物污水處理設施 農舍興建圍牆，不得超過農舍用地面積範圍 地下層每層興建…","113年 第12題｜依實施區域計畫地區建築管理辦法，於各種用地內申請建造自用農舍者，下列敘述何者錯誤？ 其總樓地板面積不得超過 495 平方公尺 建築面積不得超過其耕地面積 10% 建築物高…"]},{"name":"第一章 用語定義｜第1條第34款 避難層","avg":1.9,"avg3":2.0,"count":19,"grade":"B","trend":"flat","yrs":[1,1,0,1,1,1,1,1,1,1],"sq":["114年 第25題｜依建築技術規則有關建築物於避難層開向屋外出入口之規定，下列何者錯誤？ A-1 類組建築物每處入口寬度及高度均不得小於 1.8 公尺 A-1 類組建築物在避難層供公眾使用之…","113年 第28題｜某建築物屬 H-1 組之產後護理機構，除避難層外各樓層應以具 1 小時以上防火時效之牆壁及防火設備 分隔為 2 個以上之區劃，前述區劃之樓地板面積至少不得小於同樓層另一區…"]},{"name":"第一章 用語定義｜第1條第21款 集合住宅","avg":2.2,"avg3":1.3,"count":22,"grade":"B","trend":"up","yrs":[1,1,1,0,1,1,1,1,0,1],"sq":["114年 第16題｜下列何者非建築物公共安全檢查簽證及申報辦法規定 H-2 組集合住宅防火避難設施及設備安全標準 檢查之簽證項目？ 直通樓梯 內部裝修材料 昇降設備 緊急供電系統","114年 第32題｜依建築技術規則，有關無障礙設施之規定，下列敘述何者錯誤？ 建築物依相關法令規定免裝設衛生設備者，除使用類組為 H-2 組住宅或集合住宅外，仍應於每戶內 設置至少 1 處無…"]},{"name":"第一章 用語定義｜第1條第39款 直通樓梯","avg":1.7,"avg3":2.0,"count":17,"grade":"B","trend":"up","yrs":[1,1,0,1,1,1,1,1,1,1],"sq":["114年 第16題｜下列何者非建築物公共安全檢查簽證及申報辦法規定 H-2 組集合住宅防火避難設施及設備安全標準 檢查之簽證項目？ 直通樓梯 內部裝修材料 昇降設備 緊急供電系統","114年 第25題｜依建築技術規則有關建築物於避難層開向屋外出入口之規定，下列何者錯誤？ A-1 類組建築物每處入口寬度及高度均不得小於 1.8 公尺 A-1 類組建築物在避難層供公眾使用之…"]},{"name":"第一章 用語定義｜第1條第33款 防火構造","avg":1.8,"avg3":1.7,"count":18,"grade":"B","trend":"flat","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第23題｜依建築技術規則規定，下列何者不屬於應為防火構造建築物之範圍？ 建築物為 1 層樓，總樓地板面積為 1500 平方公尺的倉庫 建築物為 3 層樓的社區活動中心 建築物為 2…","114年 第33題｜依建築技術規則規定，高層建築物設有燃氣設備時，應將燃氣設備集中設置，並設置瓦斯漏氣自動警 報設備，且與其他部分應以至少多少小時以上防火時效之牆壁、防火門窗等防火設備及該層…"]},{"name":"第四章 防火避難設施｜第95–97條 安全梯設置","avg":1.4,"avg3":1.7,"count":14,"grade":"B","trend":"down","yrs":[1,1,0,1,1,1,1,1,1,0],"sq":["113年 第16題｜依原有合法建築物公共安全改善辦法規定，直通樓梯之設置及步行距離，增設之直通樓梯，下列敘述 何者錯誤？ 應為安全梯，且寬度應為 90 公分以上 不計入建築面積及各層樓地板面…","113年 第29題｜依建築技術規則規定，有關特別安全梯之構造，下列敘述何者錯誤？ 樓梯間及排煙室之四周牆壁應具有 1 小時以上防火時效 天花板及牆面之裝修應為耐燃 3 級以上之材料 管道間之…"]},{"name":"第十二章 高層建築物","avg":1.6,"avg3":1.0,"count":16,"grade":"C","trend":"flat","yrs":[0,1,1,1,1,1,1,1,0,1],"sq":["114年 第33題｜依建築技術規則規定，高層建築物設有燃氣設備時，應將燃氣設備集中設置，並設置瓦斯漏氣自動警 報設備，且與其他部分應以至少多少小時以上防火時效之牆壁、防火門窗等防火設備及該層…","112年 第9題｜依建築技術規則有關高層建築物之規定，高層建築物之總樓地板面積與留設空地之比不得大於一定 值，如基地屬工業區其值為何？ 15 20 25 30"]},{"name":"第一章 用語定義｜第1條第4款 建蔽率","avg":1.4,"avg3":1.0,"count":14,"grade":"C","trend":"flat","yrs":[1,1,1,1,0,1,1,1,1,1],"sq":["114年 第53題｜依非都市土地使用管制規則規定，關於非都市土地建蔽率及容積率，下列敘述何者正確？ 丁種建築用地之建蔽率為 60%，容積率為 300% 工商綜合區用地之建蔽率及容積率與丙種建…","113年 第14題｜依實施區域計畫地區建築管理辦法規定，原有農舍之修建，改建或增建面積最多在多少平方公尺以下 之平房得免申請建築執照，但其建蔽率及總樓地板面積不得超過本辦法之有關規定？ 30…"]},{"name":"第二章 一般設計通則｜第57–58條 騎樓走廊","avg":1.2,"avg3":1.0,"count":12,"grade":"C","trend":"flat","yrs":[1,1,0,1,0,1,1,1,0,1],"sq":["114年 第4題｜依建築法規定，經直轄市、縣（市）（局）主管建築機關依法許可或核准後，得不受限制之規定，不包 含下列何者？ 建築基地與建築線接連部分之最小寬度 建築物設有騎樓者，其地平面不…","112年 第16題｜室內裝修施工中變更設計，遇有下列何種情形得依「建築物室內裝修管理辦法」第 31 條規定修改竣 工圖說，一次報驗？ 增設室內樓梯 變更防火區劃 調整避難層出入口及走廊之寬度…"]},{"name":"第一章 用語定義｜第1條第8款 基地地面","avg":0.8,"avg3":1.3,"count":8,"grade":"C","trend":"flat","yrs":[0,0,0,1,1,1,0,1,1,1],"sq":["114年 第21題｜建築技術規則所稱建築物高度，指自基地地面計量至建築物最高部分之垂直高度，但部分項目得免計 入。有關不計入建築物高度之項目，下列敘述何者錯誤？ 女兒牆高度 1.5 公尺 水…","113年 第3題｜依建築法規定，下列敘述何者正確？ 建築基地與建築線應相連接，其接連部分之最小寬度，由中央主管建築機關統一規定 建築物基地地面，不得高出所臨接道路邊界處之路面 建築基地最小…"]},{"name":"第一章 用語定義｜第1條第16款 地下層","avg":0.6,"avg3":1.3,"count":6,"grade":"C","trend":"flat","yrs":[0,0,1,0,1,0,0,1,0,1],"sq":["114年 第39題｜依建築技術規則規定，下列有關電氣設備之敘述，何者錯誤？ 電氣設備配電場所應設置於地面或地面以上樓層。如有困難必須設置於地下樓層時，僅能設於地下 一層 配電場所設置於地下層…","114年 第80題｜在非離島地區申請興建個別農舍，下列敘述何者不符農業用地興建農舍辦法之規定？ 興建之農舍，得免設置建築物污水處理設施 農舍興建圍牆，不得超過農舍用地面積範圍 地下層每層興建…"]},{"name":"第一章 用語定義｜第1條第19款 居室","avg":1.0,"avg3":0.7,"count":10,"grade":"C","trend":"down","yrs":[1,0,0,0,1,1,1,1,0,1],"sq":["114年 第22題｜依建築技術規則規定，建築物之居室應設置採光用窗或開口，其採光面積或有效採光面積規定，下列 何者錯誤？ 養老院之居室不得小於樓地板面積八分之一 學校教室不得小於樓地板面積五…","112年 第8題｜下列何者非屬建築技術規則規定之無窗戶居室？ 可直接開向戶外或可通達戶外之有效防火避難構造開口，其高度為 1.1 公尺，寬度為 70 公分 樓地板面積為 100 平方公尺，…"]},{"name":"第五章 特定建築物｜防空避難設備","avg":1.0,"avg3":0.7,"count":10,"grade":"C","trend":"flat","yrs":[1,1,1,0,1,0,0,1,0,1],"sq":["114年 第28題｜依建築技術規則規定，供學校使用之建築物，按其主管機關核定計畫容納使用人數至少每人多少平方 公尺計算，整體規劃附建防空避難設備？ 0.5 0.75 0.85 1.0","112年 第30題｜依建築技術規則規定，防空避難設備使用之樓地板面積至少達到多少平方公尺以上，僅能兼做停車空 間使用？ 150 200 300 500"]},{"name":"第一章 用語定義｜第1條第44款 特別安全梯","avg":0.7,"avg3":1.0,"count":7,"grade":"C","trend":"down","yrs":[0,1,0,0,1,0,1,1,1,0],"sq":["113年 第29題｜依建築技術規則規定，有關特別安全梯之構造，下列敘述何者錯誤？ 樓梯間及排煙室之四周牆壁應具有 1 小時以上防火時效 天花板及牆面之裝修應為耐燃 3 級以上之材料 管道間之…","113年 第31題｜依建築技術規則規定，有關安全梯構造之敘述，下列何者錯誤？ 特別安全梯自陽臺進入樓梯間之出入口之防火門應具半小時以上防火時效 戶外安全梯出入口防火門應具半小時以上防火時效及…"]},{"name":"第四章 防火避難設施｜第101–104條 排煙設備","avg":0.6,"avg3":1.0,"count":6,"grade":"C","trend":"down","yrs":[0,0,1,0,1,0,1,1,1,1],"sq":["114年 第24題｜依建築技術規則有關排煙設備構造之規定，下列敘述何者錯誤？ 防煙壁每一區劃面積得為 1500 平方公尺 區劃範圍任一部分至排煙口水平距離不得超過 45 公尺 排煙口之開口面…","113年 第29題｜依建築技術規則規定，有關特別安全梯之構造，下列敘述何者錯誤？ 樓梯間及排煙室之四周牆壁應具有 1 小時以上防火時效 天花板及牆面之裝修應為耐燃 3 級以上之材料 管道間之…"]},{"name":"第二章 一般設計通則｜第42–43條 採光通風","avg":0.7,"avg3":0.7,"count":7,"grade":"C","trend":"flat","yrs":[1,0,0,0,1,1,1,1,0,1],"sq":["114年 第22題｜依建築技術規則規定，建築物之居室應設置採光用窗或開口，其採光面積或有效採光面積規定，下列 何者錯誤？ 養老院之居室不得小於樓地板面積八分之一 學校教室不得小於樓地板面積五…","112年 第8題｜下列何者非屬建築技術規則規定之無窗戶居室？ 可直接開向戶外或可通達戶外之有效防火避難構造開口，其高度為 1.1 公尺，寬度為 70 公分 樓地板面積為 100 平方公尺，…"]},{"name":"第九章 容積管制｜第164條 日照斜線高度限制","avg":0.4,"avg3":1.0,"count":4,"grade":"C","trend":"flat","yrs":[0,0,0,0,0,0,1,0,1,0],"sq":["113年 第24題｜依據建築技術規則總則編規定，直轄市、縣（市）主管建築機關因應地方特殊需求，得另訂設計、施 工、構造及設備規定並報經中央主管建築機關核定後實施之事項，不包括下列那一項？ 新…","113年 第25題｜依建築技術規則規定，下列何者可以透過中央指定之專業機構完成評定並向中央主管建築機關申請認 可，得不適用本規則一部或全部之規定？ 無障礙設施設計 有效日照設計 防火避難設施…"]},{"name":"第十一章 地下建築物","avg":0.5,"avg3":0.7,"count":5,"grade":"C","trend":"flat","yrs":[0,1,1,0,0,1,0,1,0,1],"sq":["114年 第40題｜依建築技術規則地下建築物之規定，供地下使用單元使用之總樓地板面積為 3500 平方公尺時，最多 應按每多少平方公尺，以具有 1 小時以上防火時效之牆壁、防火門窗等防火設備…","112年 第19題｜依建築技術規則，有關緩衝區之設置規定，下列敘述何者錯誤？ 緩衝區位於地下建築物或地下運輸系統與建築物地下層之連接處 緩衝區具有專用直通樓梯供緊急避難 緩衝區與連接之地下運…"]},{"name":"第一章 用語定義｜第1條第20款 露臺及陽臺","avg":0.6,"avg3":0.3,"count":6,"grade":"D","trend":"flat","yrs":[0,0,0,1,1,1,1,0,1,0],"sq":["113年 第31題｜依建築技術規則規定，有關安全梯構造之敘述，下列何者錯誤？ 特別安全梯自陽臺進入樓梯間之出入口之防火門應具半小時以上防火時效 戶外安全梯出入口防火門應具半小時以上防火時效及…","111年 第34題｜依建築技術規則規定，有關建築物安全梯或特別安全梯之設置，下列敘述何者錯誤？ 安全梯之樓梯間於避難層之出入口，應裝設具 1 小時防火時效之防火門 特別安全梯得經由他座特別安…"]},{"name":"第一章 用語定義｜第1條第40款 永久性空地","avg":0.5,"avg3":0.3,"count":5,"grade":"D","trend":"flat","yrs":[0,1,0,0,1,1,1,0,1,0],"sq":["113年 第46題｜依都市計畫容積移轉實施辦法規定，非屬位於整體開發地區、實施都市更新地區、面臨永久性空地或 其他都市計畫指定地區範圍內接受基地之可移入容積，以不超過該接受基地基準容積百分之…","111年 第33題｜依建築技術規則有關防火間隔規定，防火構造建築物，除基地鄰接寬度 6 公尺以上之道路或深度 6 公 尺以上之永久性空地側外，下列敘述何者錯誤？ 建築物自基地境界線退縮留設之…"]},{"name":"第四章 防火避難設施｜第93條 直通樓梯距離","avg":0.5,"avg3":0.3,"count":5,"grade":"D","trend":"flat","yrs":[1,0,0,1,1,0,1,0,1,0],"sq":["113年 第16題｜依原有合法建築物公共安全改善辦法規定，直通樓梯之設置及步行距離，增設之直通樓梯，下列敘述 何者錯誤？ 應為安全梯，且寬度應為 90 公分以上 不計入建築面積及各層樓地板面…","111年 第37題｜依建築技術規則規定，有關地下使用單元與地下通道之關係，下列敘述何者錯誤？ 地下使用單元臨接地下通道之寬度，不得小於 2 公尺 地下使用單元內之任一點，至地下通道或專用直通…"]},{"name":"第一章 用語定義｜第1條第10款 屋頂突出物","avg":0.2,"avg3":0.7,"count":2,"grade":"D","trend":"flat","yrs":[0,0,0,0,0,0,0,1,0,1],"sq":["114年 第21題｜建築技術規則所稱建築物高度，指自基地地面計量至建築物最高部分之垂直高度，但部分項目得免計 入。有關不計入建築物高度之項目，下列敘述何者錯誤？ 女兒牆高度 1.5 公尺 水…","112年 第24題｜為協助老舊公寓增設昇降機，以解決高齡者上下樓層的障礙問題。依現行建築技術規則修訂放寬的法 規內容，不包含下列何者？ 建築面積及各層樓地板面積之限制 鄰棟間隔及前後院落之限…"]},{"name":"第一章 用語定義｜第1條第30款 耐燃材料","avg":0.2,"avg3":0.7,"count":2,"grade":"D","trend":"flat","yrs":[0,0,0,0,0,0,0,1,0,0],"sq":["112年 第16題｜室內裝修施工中變更設計，遇有下列何種情形得依「建築物室內裝修管理辦法」第 31 條規定修改竣 工圖說，一次報驗？ 增設室內樓梯 變更防火區劃 調整避難層出入口及走廊之寬度…","112年 第23題｜依建築技術規則，有關建築物之防火及防火避難設施相關規定，下列敘述何者正確？ 耐燃等級是用來描述建築物主要結構構件、防火設備及防火區劃構造遭受火災時可耐火之時間 防焰性能是…"]},{"name":"第一章 用語定義｜第1條第35款 無窗戶居室","avg":0.4,"avg3":0.3,"count":4,"grade":"D","trend":"flat","yrs":[1,0,0,0,1,1,0,1,0,0],"sq":["112年 第8題｜下列何者非屬建築技術規則規定之無窗戶居室？ 可直接開向戶外或可通達戶外之有效防火避難構造開口，其高度為 1.1 公尺，寬度為 70 公分 樓地板面積為 100 平方公尺，…","110年 第31題｜樓地板面積超過 50 平方公尺之居室，其天花板或天花板下方 80 公分範圍以內之有效通風面積未達樓 地板面積至多百分之多少者，視為無窗戶居室？ 1 2 3 4"]},{"name":"第六章 施工安全措施｜擋土設備與施工圍籬","avg":0.4,"avg3":0.3,"count":4,"grade":"D","trend":"flat","yrs":[0,0,1,0,1,1,0,0,0,1],"sq":["114年 第30題｜依建築技術規則規定，挖土深度至少多少公尺以上者，除地質良好，不致發生崩塌或其周圍狀況無安 全之慮者外，應有適當之擋土設備？ 1.5 2.0 2.5 3.0","110年 第8題｜依建築法規定，二層以上建築物施工時，其施工部分距離道路境界線或基地境界線至少多少公尺以內 者，應設置防止物體墜落之適當圍籬？ 1.5 2.0 2.5 3.0 代號：180…"]},{"name":"第一章 用語定義｜第1條第32款 阻熱性","avg":0.3,"avg3":0.3,"count":3,"grade":"D","trend":"flat","yrs":[0,1,0,0,1,0,0,0,1,0],"sq":["113年 第31題｜依建築技術規則規定，有關安全梯構造之敘述，下列何者錯誤？ 特別安全梯自陽臺進入樓梯間之出入口之防火門應具半小時以上防火時效 戶外安全梯出入口防火門應具半小時以上防火時效及…","109年 第50題｜依建築技術規則規定，下列何者出入口之防火設備應同時具有防火時效、阻熱性及遮煙性能？ 進入室內安全梯之出入口 進入戶外安全梯之出入口 自排煙室進入特別安全梯之出入口 室內進…"]},{"name":"各章通則｜綠建築節能相關","avg":0.5,"avg3":0.0,"count":5,"grade":"D","trend":"flat","yrs":[0,0,0,1,1,1,0,0,0,0],"sq":["110年 第33題｜依綠建築基準，建築物雨水或生活雜排水回收再利用之適用範圍，為總樓地板面積達多少平方公尺以 上之新建建築物，但衛生醫療類（F-1 組）或經中央主管建築機關認可之建築物，不在…","110年 第37題｜綠建築中所稱平均熱傳透率，是指當室內外溫差在絕對溫度多少度時，建築物外殼單位面積在單位時 間內之平均傳透熱量？ 1 2 3 5"]},{"name":"第一章 用語定義｜第1條第28款 不燃材料","avg":0.4,"avg3":0.0,"count":4,"grade":"D","trend":"flat","yrs":[0,0,1,1,1,0,0,0,0,0],"sq":["109年 第43題｜建築技術規則中防火門分為常時關閉式及常時開放式兩種，有關防火門之規定，下列何者錯誤？ 常時關閉式防火門單一門扇面積不得超過 3 平方公尺 常時開放式防火門應裝設利用煙感應…","108年 第27題｜防煙壁，係指以不燃材料建造之垂壁，依建築技術規則規定應自天花板下垂至少多少公分以上？ 50 45 40 30"]},{"name":"第一章 用語定義｜第1條第38款 私設通路","avg":0.3,"avg3":0.0,"count":3,"grade":"D","trend":"flat","yrs":[0,0,0,1,1,0,0,0,0,0],"sq":["109年 第2題｜依據建築技術規則之規定，有關「道路」、「私設通路」及「類似通路」之敘述，下列何者錯誤？ 面前道路寬度得包含人行道及沿道路邊綠帶 私設通路與道路之交叉口，免截角 道路包含私…","108年 第11題｜依建築基地法定空地分割辦法規定，下列敘述何者正確？ 分割後之各建築基地建蔽率得合併檢討 每一建築基地均應連接建築線並得以單獨申請建築，且每一建築物應具獨立之出入口 建築基…"]},{"name":"第四章 防火避難設施｜第108條 緊急進口","avg":0.3,"avg3":0.0,"count":3,"grade":"D","trend":"flat","yrs":[1,1,1,0,0,0,0,0,0,0],"sq":["107年 第38題｜有關緊急進口構造之敘述，下列何者錯誤？ 進口之間隔不得大於 40 公尺 進口外設置陽台，寬度至少 1 公尺，長度至少 3 公尺，且可自外開啟或輕易破壞進入室內 進口寬度至…","106年 第29題｜下列何者不是「建築物公共安全檢查簽證及申報辦法」中所規定安全檢查簽證之防火避難設施項目？ 消防栓箱、昇降設備 屋頂避難平臺、緊急進口 直通樓梯、走廊 避難層出入口、避難層…"]},{"name":"第四章 防火避難設施｜第107條 緊急用昇降機","avg":0.2,"avg3":0.0,"count":2,"grade":"D","trend":"flat","yrs":[1,0,1,0,0,0,0,0,0,0],"sq":["107年 第41題｜建築物高度超過多少層樓以上部分之最大一層樓地板面積，在 1500 平方公尺以下者，至少應設置一 座緊急用昇降機？ 10 樓 11 樓 12 樓 13 樓","105年 第7題｜有關建築技術規則中緊急用昇降機之敘述，下列何者錯誤？ 超過 10 層樓之各層樓地板面積之和未達 500 平方公尺者，可免設緊急用昇降機 建築物高度 11 層樓以下，免檢討…"]},{"name":"第一章 用語定義｜第1條第18款 夾層","avg":0.1,"avg3":0.0,"count":1,"grade":"D","trend":"flat","yrs":[0,0,1,0,0,0,0,0,0,0],"sq":["107年 第42題｜依建築技術規則建築設計施工編規定，集合住宅建築物樓板挑空設計，下列敘述何者正確？ 每單位限設 1 處 每處面積不得大於 15 平方公尺 挑空樓層平均高度不得大於 7 公尺…"]}]},{"name":"建築法","grade":"A","avg":22.0,"avg3":23.0,"trend":"up","total":220,"readMin":90,"group":"建築許可核心","topics":[{"name":"第一章 總則｜第1–9條 基本定義與立法目的","avg":11.0,"avg3":14.0,"count":110,"grade":"A","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第1題｜依建築法規定，下列敘述何者錯誤？ 建築基地，為供建築物本身所占之地面及其所應留設之法定空地 應留設之法定空地，非依規定不得移轉 法定空地之留設，應包括建築物與其前後左右之…","114年 第3題｜依建築法規定，公有建築物應由下列何者，將核定或決定之建築計畫、工程圖樣及說明書，向直轄市、 縣（市）（局）主管建築機關請領建築執照？ 起造機關 設計人 承造人 監造人"]},{"name":"第五章 建築許可｜第25–32條 建造執照","avg":6.4,"avg3":6.7,"count":64,"grade":"A","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第2題｜依建築法規定，建築物之修建應請領何種執照？ 修建執照 建造執照 雜項執照 整建執照","114年 第8題｜依建築法規定，建築法施行前，供公眾使用之建築物而未領有使用執照者，其所有權人應申請核發使 用執照，其使用執照之核發及安全處理，由直轄市、縣（市）政府於下列何者定之？ 建築…"]},{"name":"第五章 建築許可｜第12–40條 起造人承造人監造人","avg":4.8,"avg3":4.3,"count":48,"grade":"A","trend":"flat","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第3題｜依建築法規定，公有建築物應由下列何者，將核定或決定之建築計畫、工程圖樣及說明書，向直轄市、 縣（市）（局）主管建築機關請領建築執照？ 起造機關 設計人 承造人 監造人","114年 第5題｜依建築法規定，直轄市、縣（市）（局）主管建築機關因都市計畫之變更，對已領有執照正在施工中 之建築物，如有妨礙變更後之都市計畫，下列敘述何者正確？ 得令其依規定辦理變更設計…"]},{"name":"第七章 使用管理｜第70–75條 使用執照","avg":2.9,"avg3":3.7,"count":29,"grade":"A","trend":"flat","yrs":[0,1,1,1,1,1,1,1,1,1],"sq":["114年 第8題｜依建築法規定，建築法施行前，供公眾使用之建築物而未領有使用執照者，其所有權人應申請核發使 用執照，其使用執照之核發及安全處理，由直轄市、縣（市）政府於下列何者定之？ 建築…","114年 第12題｜依建築物使用類組及變更使用辦法規定，有關變更使用執照相關期限，下列敘述何者錯誤？ 建築物申請變更使用經主管建築機關審查合格後，其須施工者，發給同意變更文件時應核定施工期 …"]},{"name":"第七章 使用管理｜第77條 供公眾使用建築物","avg":2.4,"avg3":2.3,"count":24,"grade":"B","trend":"flat","yrs":[1,1,1,1,1,0,1,1,1,1],"sq":["114年 第6題｜依建築法規定，為維護建築物合法使用與其構造及設備安全，供公眾使用之建築物，應由建築物所有 權人、使用人定期委託中央主管建築機關認可之專業機構或人員檢查簽證，其檢查簽證結果…","114年 第8題｜依建築法規定，建築法施行前，供公眾使用之建築物而未領有使用執照者，其所有權人應申請核發使 用執照，其使用執照之核發及安全處理，由直轄市、縣（市）政府於下列何者定之？ 建築…"]},{"name":"第六章 施工管理｜第63–69條 施工安全","avg":1.7,"avg3":2.3,"count":17,"grade":"B","trend":"flat","yrs":[1,1,0,1,0,1,1,1,1,1],"sq":["114年 第4題｜依建築法規定，經直轄市、縣（市）（局）主管建築機關依法許可或核准後，得不受限制之規定，不包 含下列何者？ 建築基地與建築線接連部分之最小寬度 建築物設有騎樓者，其地平面不…","114年 第5題｜依建築法規定，直轄市、縣（市）（局）主管建築機關因都市計畫之變更，對已領有執照正在施工中 之建築物，如有妨礙變更後之都市計畫，下列敘述何者正確？ 得令其依規定辦理變更設計…"]},{"name":"第九章 罰則｜第86–105條 違章建築","avg":1.6,"avg3":2.0,"count":16,"grade":"B","trend":"up","yrs":[1,0,1,1,1,1,1,1,1,1],"sq":["114年 第7題｜建築師依建築法規定辦理建築物有關公共安全之構造及設備檢查，簽證內容不實者，應處多少新臺幣 罰鍰？ 3 萬元以上 15 萬元以下 6 萬元以上 30 萬元以下 50 萬元以…","113年 第9題｜依違章建築處理辦法規定，舊違章建築在未依規定拆除或整理前，下列敘述何者正確？ 得准予修繕，但不得新建、增建、改建、修建 得准予修繕或修建，但不得新建、增建、改建 得准予修…"]},{"name":"第四章 建築界線｜第42–44條 建築線","avg":1.6,"avg3":1.3,"count":16,"grade":"C","trend":"flat","yrs":[1,1,0,1,1,1,1,1,1,1],"sq":["114年 第4題｜依建築法規定，經直轄市、縣（市）（局）主管建築機關依法許可或核准後，得不受限制之規定，不包 含下列何者？ 建築基地與建築線接連部分之最小寬度 建築物設有騎樓者，其地平面不…","114年 第27題｜依建築技術規則有關基地內通路之規定，下列敘述何者錯誤？ 以基地內通路為進出道路之建築物，其總樓地板面積合計在 1000 平方公尺以上者，通路寬度為 6 公尺 基地內各棟建…"]},{"name":"第八章 雜則｜第98–101條 非都市建築許可特例","avg":1.7,"avg3":0.7,"count":17,"grade":"C","trend":"down","yrs":[1,1,1,1,1,1,1,0,1,1],"sq":["114年 第53題｜依非都市土地使用管制規則規定，關於非都市土地建蔽率及容積率，下列敘述何者正確？ 丁種建築用地之建蔽率為 60%，容積率為 300% 工商綜合區用地之建蔽率及容積率與丙種建…","113年 第43題｜有關都市更新條例用語之敘述，下列何者正確？ 都市更新：在都市計畫範圍或非都市土地，實施重建、整建或維護措施 實施者：實施都市更新事業之機關、機構、團體或自然人 重建：拆除…"]},{"name":"第七章 使用管理｜第78–79條 拆除執照","avg":0.8,"avg3":0.3,"count":8,"grade":"C","trend":"flat","yrs":[0,1,1,1,1,1,1,0,0,1],"sq":["114年 第60題｜依公寓大廈管理條例規定，某建設公司刻正推動都市更新案件，其都市更新事業計畫業經當地主管機 關核准，但未經領得何種文件前，不得辦理銷售？ 拆除執照 建造執照 使用執照 權利…","111年 第20題｜我國憲法保障國民合法的私有財產權利不受侵犯，但在某些情形下，建築法明定主管建築機關得依法 強制拆除私有建築物且免辦理拆除執照。上述情形不包括下列何者？ 經直轄市、縣（市）…"]}]},{"name":"建築物無障礙設施設計規範","grade":"A","avg":7.8,"avg3":6.7,"trend":"up","total":78,"readMin":45,"group":"獨立法規","topics":[{"name":"第二章 無障礙通路｜室外通路・坡道・扶手","avg":2.8,"avg3":2.0,"count":28,"grade":"B","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第69題｜依建築物無障礙設施設計規範規定，有關無障礙坡道，下列敘述何者錯誤？ 未設樓梯，以坡道取代樓梯者，坡道淨寬最小為 120 公分 高差超過 20 公分之坡道，坡度不得大於 1…","114年 第72題｜依建築物無障礙設施設計規範有關無障礙浴室設置浴缸規定，下列敘述何者錯誤？ 浴缸內側長度不得大於 135 公分，浴缸外側距地板面高度 50 公分至 55 公分 浴缸側向牆壁…"]},{"name":"各章通則｜尺寸規定","avg":2.1,"avg3":1.3,"count":21,"grade":"B","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第32題｜依建築技術規則，有關無障礙設施之規定，下列敘述何者錯誤？ 建築物依相關法令規定免裝設衛生設備者，除使用類組為 H-2 組住宅或集合住宅外，仍應於每戶內 設置至少 1 處無…","114年 第73題｜依建築物無障礙設施設計規範規定，機車停車位之出入口寬度及通達無障礙機車停車位之車道寬度至 少均不得小於多少公分？ 120 150 180 210"]},{"name":"第七章 輪椅觀眾席","avg":1.2,"avg3":1.7,"count":12,"grade":"C","trend":"flat","yrs":[1,1,1,1,0,0,1,1,1,1],"sq":["114年 第32題｜依建築技術規則，有關無障礙設施之規定，下列敘述何者錯誤？ 建築物依相關法令規定免裝設衛生設備者，除使用類組為 H-2 組住宅或集合住宅外，仍應於每戶內 設置至少 1 處無…","113年 第69題｜有關無障礙設施「輪椅觀眾席位」之規定，下列何者錯誤？ 由前方進入之輪椅觀眾席位，深度應為 120 公分以上 由後方進入之輪椅觀眾席位，深度應為 100 公分以上 僅可由右…"]},{"name":"第三章 樓梯｜梯級尺寸・防滑","avg":1.1,"avg3":1.7,"count":11,"grade":"C","trend":"flat","yrs":[0,1,1,0,0,1,1,1,1,1],"sq":["114年 第69題｜依建築物無障礙設施設計規範規定，有關無障礙坡道，下列敘述何者錯誤？ 未設樓梯，以坡道取代樓梯者，坡道淨寬最小為 120 公分 高差超過 20 公分之坡道，坡度不得大於 1…","114年 第71題｜依建築物無障礙設施設計規範規定，樓梯上所有梯級之級高及級深應統一，級高（R）應為 16 公分以 下，級深（T）應為 26 公分以上，且應符合下列何者規定？ 55 公分≦2…"]},{"name":"第八章 停車空間","avg":1.3,"avg3":1.0,"count":13,"grade":"C","trend":"flat","yrs":[1,1,0,1,1,1,1,1,0,1],"sq":["114年 第32題｜依建築技術規則，有關無障礙設施之規定，下列敘述何者錯誤？ 建築物依相關法令規定免裝設衛生設備者，除使用類組為 H-2 組住宅或集合住宅外，仍應於每戶內 設置至少 1 處無…","114年 第73題｜依建築物無障礙設施設計規範規定，機車停車位之出入口寬度及通達無障礙機車停車位之車道寬度至 少均不得小於多少公分？ 120 150 180 210"]},{"name":"第五章 廁所盥洗室","avg":1.1,"avg3":1.0,"count":11,"grade":"C","trend":"flat","yrs":[0,1,1,1,0,1,1,1,1,1],"sq":["114年 第32題｜依建築技術規則，有關無障礙設施之規定，下列敘述何者錯誤？ 建築物依相關法令規定免裝設衛生設備者，除使用類組為 H-2 組住宅或集合住宅外，仍應於每戶內 設置至少 1 處無…","113年 第72題｜依建築物無障礙設施設計規範之無障礙客房規定，下列敘述何者錯誤？ 無障礙客房內應設置衛浴設備，衛浴設備至少應包括馬桶、洗面盆及浴缸或淋浴間等 衛浴設備空間應設置直徑 135…"]},{"name":"第四章 昇降設備｜昇降機規定","avg":1.2,"avg3":0.7,"count":12,"grade":"C","trend":"flat","yrs":[1,1,0,1,1,1,1,0,1,1],"sq":["114年 第76題｜依建築物無障礙設施設計規範有關無障礙昇降設備規定，下列敘述何者錯誤？ 昇降機出入口處之地板面，應與機廂地板面保持平整，其與機廂地板面之水平間隙不得大於 3.2 公分 除建…","113年 第68題｜有關無障礙昇降機機門設有可自動停止並重新開啟的裝置，下列敘述何者正確？ 該裝置是讓門遇到物體或人阻礙時的安全設計 該裝置主要是方便搬運大型物件的安全設計 昇降機開門時，昇…"]}]},{"name":"建築師法","grade":"A","avg":7.1,"avg3":7.7,"trend":"up","total":71,"readMin":45,"group":"建築許可核心","topics":[{"name":"第三章 業務及責任｜第16–22條 業務範圍","avg":4.8,"avg3":5.7,"count":48,"grade":"A","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第3題｜依建築法規定，公有建築物應由下列何者，將核定或決定之建築計畫、工程圖樣及說明書，向直轄市、 縣（市）（局）主管建築機關請領建築執照？ 起造機關 設計人 承造人 監造人","114年 第7題｜建築師依建築法規定辦理建築物有關公共安全之構造及設備檢查，簽證內容不實者，應處多少新臺幣 罰鍰？ 3 萬元以上 15 萬元以下 6 萬元以上 30 萬元以下 50 萬元以…"]},{"name":"第二章 開業｜第7–12條 開業登記","avg":3.9,"avg3":4.3,"count":39,"grade":"A","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第10題｜依建築物室內裝修管理辦法規定，有關室內裝修圖說的署名及簽證，下列敘述何者正確？ 室內裝修圖說應一律由開業建築師署名負責 室內裝修圖說應一律由專業設計技術人員（非開業建築師…","114年 第18題｜依建築師法規定，開業建築師得兼任或兼營下列何種職業？ 建築材料商 依公務人員任用法任用之公務人員 不動產營業員 營造業之主任技師 代號：1801 頁次：8－3"]},{"name":"第五章 懲戒｜第44–56條 懲戒","avg":0.8,"avg3":1.0,"count":8,"grade":"C","trend":"flat","yrs":[0,0,1,0,1,0,1,1,1,1],"sq":["114年 第20題｜開業建築師有違反建築師法相關規定時應接受之懲戒處分，不包括下列何者？ 警告、申誡 記過 停止執行業務 2 月以上 2 年以下 撤銷或廢止開業證書","113年 第22題｜依建築師法規定，建築師之懲戒處分，不包含下列何者？ 警告 申誡 停止執行業務 3 年以上 撤銷開業證書"]},{"name":"第四章 公會｜第30–42條 建築師公會","avg":0.5,"avg3":0.7,"count":5,"grade":"C","trend":"flat","yrs":[0,0,0,0,1,0,1,1,0,0],"sq":["112年 第6題｜依建築師法之規定，下列何者非中華民國全國建築師公會的會員？ 臺北市建築師公會 桃園市建築師公會 彰化縣建築師公會 臺灣省建築師公會","112年 第27題｜依建築師法規定，建築師未經領有開業證書、已撤銷或廢止開業證書、未加入建築師公會或受停止執 行業務處分而擅自執業者，除勒令停業外，並處新臺幣多少元之罰鍰；其不遵從而繼續執業…"]},{"name":"第三章 業務及責任｜第25條 兼任禁止","avg":0.4,"avg3":0.3,"count":4,"grade":"D","trend":"flat","yrs":[1,1,0,1,0,0,0,0,0,1],"sq":["114年 第18題｜依建築師法規定，開業建築師得兼任或兼營下列何種職業？ 建築材料商 依公務人員任用法任用之公務人員 不動產營業員 營造業之主任技師 代號：1801 頁次：8－3","108年 第19題｜依建築師法之規定，建築師得兼任或兼營下列何種職業？ 依公務人員任用法任用之公務人員 營造業 成立室內裝修公司 建築材料商"]}]},{"name":"都市更新條例","grade":"A","avg":5.4,"avg3":6.0,"trend":"up","total":54,"readMin":45,"group":"都市更新雙法","topics":[{"name":"第二章 都市更新事業｜更新單元劃定","avg":5.0,"avg3":6.0,"count":50,"grade":"A","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第44題｜依都市更新條例規定，下列何者非地方政府優先劃定都市更新地區之考量因素？ 建築物年代久遠有傾頹或朽壞之虞 建築物未符合都市應有之機能 建築物基準容積過低 建築物排列不良足以…","114年 第46題｜依都市更新條例規定，至少逾多少人之土地及合法建築物所有權人自行實施都市更新事業時，應組織 都市更新會？ 5 6 7 8"]},{"name":"第四章 權利變換｜第29–57條","avg":2.5,"avg3":2.0,"count":25,"grade":"B","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第48題｜依都市更新條例施行細則規定，都市更新事業計畫表明之重建區段之土地使用計畫，含建築物配置及 設計圖說，其比例尺最小不得小於多少？ 1/100 1/500 1/1000 1/…","114年 第60題｜依公寓大廈管理條例規定，某建設公司刻正推動都市更新案件，其都市更新事業計畫業經當地主管機 關核准，但未經領得何種文件前，不得辦理銷售？ 拆除執照 建造執照 使用執照 權利…"]},{"name":"第六章 獎助｜稅捐減免","avg":0.2,"avg3":0.0,"count":2,"grade":"D","trend":"flat","yrs":[0,0,0,0,1,1,0,0,0,0],"sq":["110年 第26題｜都市更新地區內土地增值稅得予減免，下列何者依規定係減徵 40%？ 依權利變換取得之土地，於更新後第一次移轉時 實施權利變換應分配之土地未達最小分配面積單元，而改領現金者 …","109年 第61題｜依都市更新條例規定，對於更新單元內土地及建築物之稅捐減免，下列敘述何者正確？ 實施權利變換，以土地及建築物抵付權利變換負擔者，免徵土地增值稅及契稅 依權利變換取得之土地及…"]}]},{"name":"建築技術規則設備編","grade":"A","avg":4.4,"avg3":6.7,"trend":"up","total":44,"readMin":60,"group":"建築技術規則三編","topics":[{"name":"各章通則｜一般規定","avg":3.8,"avg3":6.0,"count":38,"grade":"A","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第24題｜依建築技術規則有關排煙設備構造之規定，下列敘述何者錯誤？ 防煙壁每一區劃面積得為 1500 平方公尺 區劃範圍任一部分至排煙口水平距離不得超過 45 公尺 排煙口之開口面…","114年 第26題｜依建築技術規則規定，供車庫使用之特定建築物，利用汽車昇降機設備者，應按車庫樓地板面積至多 每多少平方公尺以內為一單位裝置昇降機一台？ 1000 1200 1500 200…"]},{"name":"第二章 給排水衛生設備｜第26–60條","avg":0.5,"avg3":1.0,"count":5,"grade":"C","trend":"flat","yrs":[0,0,0,0,0,1,1,1,0,1],"sq":["114年 第39題｜依建築技術規則規定，下列有關電氣設備之敘述，何者錯誤？ 電氣設備配電場所應設置於地面或地面以上樓層。如有困難必須設置於地下樓層時，僅能設於地下 一層 配電場所設置於地下層…","114年 第80題｜在非離島地區申請興建個別農舍，下列敘述何者不符農業用地興建農舍辦法之規定？ 興建之農舍，得免設置建築物污水處理設施 農舍興建圍牆，不得超過農舍用地面積範圍 地下層每層興建…"]},{"name":"第一章 電氣設備｜第1–25條","avg":0.5,"avg3":0.3,"count":5,"grade":"D","trend":"flat","yrs":[0,0,1,1,0,1,0,0,0,1],"sq":["114年 第39題｜依建築技術規則規定，下列有關電氣設備之敘述，何者錯誤？ 電氣設備配電場所應設置於地面或地面以上樓層。如有困難必須設置於地下樓層時，僅能設於地下 一層 配電場所設置於地下層…","110年 第7題｜依建築物公共安全檢查簽證及申報辦法，供住宿類（H-2）組集合住宅使用之建築物，規定檢查項目 除直通樓梯、避難層出入口、昇降設備、避雷設備、緊急供電系統外，尚包括下列那一項…"]},{"name":"第四章 燃氣設備｜第77–91條","avg":0.2,"avg3":0.7,"count":2,"grade":"D","trend":"flat","yrs":[0,0,0,0,0,0,0,0,0,1],"sq":["114年 第33題｜依建築技術規則規定，高層建築物設有燃氣設備時，應將燃氣設備集中設置，並設置瓦斯漏氣自動警 報設備，且與其他部分應以至少多少小時以上防火時效之牆壁、防火門窗等防火設備及該層…","114年 第39題｜依建築技術規則規定，下列有關電氣設備之敘述，何者錯誤？ 電氣設備配電場所應設置於地面或地面以上樓層。如有困難必須設置於地下樓層時，僅能設於地下 一層 配電場所設置於地下層…"]}]},{"name":"政府採購法","grade":"B","avg":5.8,"avg3":3.7,"trend":"down","total":58,"readMin":60,"group":"工程發包執行","topics":[{"name":"各章通則｜一般規定","avg":3.8,"avg3":3.3,"count":38,"grade":"A","trend":"down","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第65題｜下列何種採購須依政府採購法之規定辦理？ 民間辦理供公眾使用建築之採購 法人接受機關補助辦理之採購，未達公告金額者 公營事業辦理之採購 法人或團體接受機關補助辦理藝文採購","114年 第66題｜依政府採購法規定，有關履約管理，下列敘述何者正確？ 分包廠商須就得標廠商契約之全部，與得標廠商連帶負瑕疵擔保責任 得標廠商違反規定轉包其他廠商時，僅得要求損害賠償，不得解…"]},{"name":"第三章 決標｜第52–58條 決標方式","avg":0.9,"avg3":0.7,"count":9,"grade":"C","trend":"down","yrs":[1,1,1,1,0,1,0,0,1,1],"sq":["114年 第67題｜依政府採購法規定，廠商因查驗或驗收不合格，情節重大者，除經判決撤銷原處分或上級機關核准外， 第 3 次被刊登於政府採購公報，應自刊登之次日起至少多少期間內不得參加投標或作…","113年 第63題｜依政府採購法規定，投標廠商有下列何種情形，機關應不予開標或不予決標？①借用或冒用他人名義 或證件投標 ②不同投標廠商間之投標文件內容有重大異常關聯 ③服務建議書頁數太少 …"]},{"name":"第一章 總則｜第7條 採購性質","avg":0.9,"avg3":0.7,"count":9,"grade":"C","trend":"flat","yrs":[1,1,1,0,1,0,1,1,0,0],"sq":["112年 第71題｜依政府採購法規定，機關辦理巨額工程採購，應依採購之特性及實際需要，成立下列何種編組，以協 助審查採購需求與經費、採購策略及招標文件等事項？ 評選委員會 稽核小組 採購工作…","112年 第72題｜依政府採購法規定，機關辦理工程採購之付款及審核程序，除契約另有約定外，下列敘述何者錯誤？ 定期估驗或分階段付款者，機關應於廠商提出估驗或階段完成之證明文件後，15 日內完…"]},{"name":"相關辦法｜機關委託技術服務計費辦法","avg":1.0,"avg3":0.3,"count":10,"grade":"C","trend":"flat","yrs":[1,1,0,0,0,1,0,1,0,0],"sq":["112年 第70題｜機關委託廠商辦理技術服務，非屬特殊情形或需要高度技術之服務案件，其服務費用採建造費用百分 比法計費者，下列敘述何者正確？ 同幢建築物用途分屬市場與宿舍者，依各用途樓地板面…","110年 第64題｜依建築物工程技術服務建造費用百分比法計費者，除機關已視個案特性及實際需要調整外，其服務費 用包括規劃、設計及監造三項，原則上各占百分之多少？ 規劃：設計：監造 = 5%：…"]},{"name":"第一章 總則｜第13條 採購金額定義","avg":0.7,"avg3":0.3,"count":7,"grade":"C","trend":"flat","yrs":[1,0,0,1,1,1,1,0,0,1],"sq":["114年 第65題｜下列何種採購須依政府採購法之規定辦理？ 民間辦理供公眾使用建築之採購 法人接受機關補助辦理之採購，未達公告金額者 公營事業辦理之採購 法人或團體接受機關補助辦理藝文採購","111年 第62題｜廠商對於公告金額以上採購異議之處理結果不服，得於收受異議處理結果之次日起最多不超過多少日 內，以書面分別向主管機關、直轄市或縣（市）政府所設之採購申訴審議委員會申訴？ 1…"]},{"name":"第四章 履約管理｜第71–73條 驗收","avg":0.6,"avg3":0.3,"count":6,"grade":"D","trend":"flat","yrs":[1,1,1,0,0,0,1,0,0,1],"sq":["114年 第67題｜依政府採購法規定，廠商因查驗或驗收不合格，情節重大者，除經判決撤銷原處分或上級機關核准外， 第 3 次被刊登於政府採購公報，應自刊登之次日起至少多少期間內不得參加投標或作…","111年 第69題｜依政府採購法規定，機關通知廠商有查驗或驗收不合格情節重大之情形，且該廠商於機關通知日起前"]},{"name":"第七章 罰則｜第101–103條 違法廠商","avg":0.6,"avg3":0.3,"count":6,"grade":"D","trend":"down","yrs":[1,1,0,0,0,0,1,0,0,1],"sq":["114年 第67題｜依政府採購法規定，廠商因查驗或驗收不合格，情節重大者，除經判決撤銷原處分或上級機關核准外， 第 3 次被刊登於政府採購公報，應自刊登之次日起至少多少期間內不得參加投標或作…","111年 第5題｜年內被任一機關刊登 1 次，則經廠商提出異議申訴審議結果並無不實者，自刊登公報之次日起多久 期間內不得參加投標或作為決標或分包廠商？ 6 個月 1 年 2 年 3 年"]},{"name":"第二章 招標｜第18–24條 招標方式","avg":0.4,"avg3":0.3,"count":4,"grade":"D","trend":"down","yrs":[1,0,1,0,0,1,0,0,1,0],"sq":["113年 第66題｜依政府採購法規定，有關機關辦理採購之招標方式，下列敘述何者正確？ 皆應經過公告方式，以確保公平公開之原則 皆應秘密為之，以利採購程序順利 可不經公告方式預先依一定資格條件…","110年 第62題｜依政府採購法規定，機關辦理公告金額以上委託技術服務採購，經公開客觀評選為優勝者，得採何種 方式招標？ 公開招標 限制性招標 選擇性招標 合理性招標 代號：1801 頁次：…"]},{"name":"第六章 爭議處理｜第75–85條 廠商申訴","avg":0.5,"avg3":0.0,"count":5,"grade":"D","trend":"flat","yrs":[1,0,0,1,0,0,1,0,0,0],"sq":["111年 第5題｜政府採購法中針對調解之敘述，下列何者正確？ 廠商得因履約爭議向採購申訴審議委員會申請調解 分包商之間因履約爭議得向採購申訴審議委員會申請調解 調解經當事人合意後，仍須經採…","111年 第62題｜廠商對於公告金額以上採購異議之處理結果不服，得於收受異議處理結果之次日起最多不超過多少日 內，以書面分別向主管機關、直轄市或縣（市）政府所設之採購申訴審議委員會申訴？ 1…"]},{"name":"第二章 招標｜第30–31條 押標金保證金","avg":0.4,"avg3":0.0,"count":4,"grade":"D","trend":"flat","yrs":[0,1,1,0,0,0,1,0,0,0],"sq":["111年 第67題｜依政府採購法規定，追繳押標金之請求權，至多幾年不行使而消滅？ 3 年 5 年 10 年 無限制","107年 第17題｜依營造業法規定，評鑑為第一級之優良營造業，承攬政府工程時，那些項目得降低百分之五十以下？ ①押標金 ②工程保證金 ③工程保留款 ④工程保固金 ①②③ ②③④ ①②④ ①③…"]},{"name":"相關辦法｜公共工程施工品質管理","avg":0.2,"avg3":0.0,"count":2,"grade":"D","trend":"flat","yrs":[1,1,0,0,0,0,0,0,0,0],"sq":["106年 第65題｜依公共工程施工品質管理制度，所謂三級品管制度中之一級係指下列何者？ 承包商 主辦單位 主管機關 監造單位","105年 第61題｜依公共工程施工品質管理制度三級品管制度，所謂二級係指下列何者？ 設計單位 工程主管機關 承包商 主辦工程單位"]},{"name":"第四章 履約管理｜第65–67條 分包轉包","avg":0.1,"avg3":0.0,"count":1,"grade":"D","trend":"flat","yrs":[0,0,0,0,0,0,1,0,0,0],"sq":["111年 第5題｜政府採購法中針對調解之敘述，下列何者正確？ 廠商得因履約爭議向採購申訴審議委員會申請調解 分包商之間因履約爭議得向採購申訴審議委員會申請調解 調解經當事人合意後，仍須經採…"]}]},{"name":"都市計畫法","grade":"B","avg":5.1,"avg3":4.3,"trend":"down","total":51,"readMin":60,"group":"土地計畫三層","topics":[{"name":"第二章 擬定變更發布｜第26–28條 計畫變更","avg":1.5,"avg3":2.0,"count":15,"grade":"B","trend":"flat","yrs":[0,1,1,1,1,1,1,1,1,1],"sq":["114年 第5題｜依建築法規定，直轄市、縣（市）（局）主管建築機關因都市計畫之變更，對已領有執照正在施工中 之建築物，如有妨礙變更後之都市計畫，下列敘述何者正確？ 得令其依規定辦理變更設計…","114年 第41題｜下列何者非屬都市計畫法所規定的都市計畫變更回饋項目？ 公共設施用地 可建築土地或樓地板面積 協助社工教育訓練 一定金額"]},{"name":"第二章 擬定變更發布｜第14–22條 主要計畫","avg":1.4,"avg3":1.0,"count":14,"grade":"C","trend":"flat","yrs":[1,1,1,0,1,1,1,0,1,1],"sq":["114年 第42題｜依都市計畫法規定，土地重劃之範圍選定後，直轄市、縣（市）政府得公告禁止該地區之土地移轉、 分割、設定負擔、新建、增建、改建及採取土石或變更地形。其禁止期間，最長不得超過多…","114年 第43題｜依都市計畫定期通盤檢討實施辦法規定，下列敘述何者錯誤？ 都市計畫發布實施已屆滿計畫年限或 20 年者，應予全面通盤檢討 都市計畫通盤檢討時，相鄰接之都市計畫，得合併辦理之…"]},{"name":"第三章 都市土地利用｜第32–42條 土地使用分區","avg":1.3,"avg3":0.7,"count":13,"grade":"C","trend":"down","yrs":[1,1,1,1,1,0,1,0,1,1],"sq":["114年 第52題｜依區域計畫法之規定，下列何者不是區域計畫應表明事項？ 人口及經濟成長、土地使用、運輸需要、資源開發等預測 自然資源之開發及保育 土地分區使用計畫及土地分區管制 老樹保存計…","113年 第79題｜依都市危險及老舊建築物加速重建條例施行細則規定，下列何者非屬重建計畫應載明事項？ 土地使用分區 經依法登記開業建築師簽證之建築物配置及設計圖說 公共設施改善計畫構想 申請…"]},{"name":"第四章 公共設施用地｜第42–49條","avg":1.1,"avg3":1.0,"count":11,"grade":"C","trend":"flat","yrs":[1,1,0,1,1,0,1,1,0,1],"sq":["114年 第41題｜下列何者非屬都市計畫法所規定的都市計畫變更回饋項目？ 公共設施用地 可建築土地或樓地板面積 協助社工教育訓練 一定金額","112年 第38題｜依都市計畫法規定，有關都市計畫公共設施之敘述，下列何者錯誤？ 公共設施保留地在未取得前，得申請為臨時建築使用 私有公共設施保留地得申請與公有非公用土地辦理交換，不受土地法…"]},{"name":"相關辦法｜容積移轉辦法","avg":0.8,"avg3":0.3,"count":8,"grade":"C","trend":"flat","yrs":[1,1,0,0,1,1,1,0,1,0],"sq":["113年 第46題｜依都市計畫容積移轉實施辦法規定，非屬位於整體開發地區、實施都市更新地區、面臨永久性空地或 其他都市計畫指定地區範圍內接受基地之可移入容積，以不超過該接受基地基準容積百分之…","111年 第49題｜依都市計畫容積移轉實施辦法規定，接受基地得以折繳代金方式移入容積，其折繳代金金額之查估及 其所需費用之負擔，下列敘述何者正確？ 由直轄市、縣（市）主管機關委託三家以上專業…"]},{"name":"第六章 罰則｜第79–83條","avg":0.2,"avg3":0.0,"count":2,"grade":"D","trend":"flat","yrs":[0,0,1,1,0,0,0,0,0,0],"sq":["108年 第9題｜依建築法規定，有關建築物強制拆除之規定，下列敘述何者錯誤？ 施工中建築物妨礙都市計畫者，必要時得強制拆除 擅自建造者，必要時得強制拆除 經勒令停工之建築物，未經許可擅自復…","107年 第35題｜依都市計畫法，都市計畫範圍內土地或建築物之使用，違反都市計畫法規定者，得勒令拆除、改建、 停止使用或恢復原狀。不遵守規定者，除應依法予以行政強制執行外，並得如何處理？ 處…"]}]},{"name":"建築技術規則構造編","grade":"B","avg":3.7,"avg3":6.3,"trend":"up","total":37,"readMin":60,"group":"建築技術規則三編","topics":[{"name":"各章通則｜一般規定","avg":2.9,"avg3":5.0,"count":29,"grade":"A","trend":"up","yrs":[1,1,0,1,1,1,1,1,1,1],"sq":["114年 第23題｜依建築技術規則規定，下列何者不屬於應為防火構造建築物之範圍？ 建築物為 1 層樓，總樓地板面積為 1500 平方公尺的倉庫 建築物為 3 層樓的社區活動中心 建築物為 2…","114年 第24題｜依建築技術規則有關排煙設備構造之規定，下列敘述何者錯誤？ 防煙壁每一區劃面積得為 1500 平方公尺 區劃範圍任一部分至排煙口水平距離不得超過 45 公尺 排煙口之開口面…"]},{"name":"第二章 耐震設計｜第41–60條","avg":0.6,"avg3":1.0,"count":6,"grade":"C","trend":"flat","yrs":[0,0,0,0,1,1,0,0,1,1],"sq":["114年 第17題｜依建築物公共安全檢查簽證及申報辦法規定，專業機構指派所屬檢查員辦理耐震能力評估檢查作業， 下列敘述何者錯誤？ 經初步評估判定結果為尚無疑慮者，得免進行詳細評估 經初步評估…","113年 第17題｜有關建築物辦理耐震能力評估檢查之規定，下列敘述何者錯誤？ 中華民國 88 年以前領得使用執照之建築物，免辦理耐震能力評估檢查 供建築物使用類組 G-1、G-2 組使用之樓…"]},{"name":"第五章 混凝土構造｜第121–140條","avg":0.3,"avg3":0.7,"count":3,"grade":"D","trend":"flat","yrs":[0,0,0,0,0,1,0,0,1,0],"sq":["113年 第38題｜依建築技術規則建築構造編，有關鋼骨鋼筋混凝土構造施工之規定，下列敘述何者錯誤？ 鋼骨鋼筋混凝土構造之施工，應依施工規範規定 鋼骨鋼筋混凝土工程之混凝土澆置，應注意其填充性…","113年 第64題｜依政府採購法相關規定，查核小組查核結果，有下列何種情況之一者，應列為丙等？ 混凝土結構物鑽心試體試驗結果不合格 人行道工程破損 室內輕隔間框架間距不足 粉刷不平整"]},{"name":"第六章 鋼構造｜第141–175條","avg":0.2,"avg3":0.3,"count":2,"grade":"D","trend":"flat","yrs":[0,0,0,0,0,1,0,0,1,0],"sq":["113年 第38題｜依建築技術規則建築構造編，有關鋼骨鋼筋混凝土構造施工之規定，下列敘述何者錯誤？ 鋼骨鋼筋混凝土構造之施工，應依施工規範規定 鋼骨鋼筋混凝土工程之混凝土澆置，應注意其填充性…","110年 第22題｜依建築技術規則規定，廣告牌塔主要部分之構造不得為下列何者？ 磚造 鋼骨鋼筋混凝土造 鋼構造 鋼筋混凝土造"]},{"name":"第三章 基礎構造｜第61–100條","avg":0.2,"avg3":0.0,"count":2,"grade":"D","trend":"flat","yrs":[0,0,0,1,0,0,0,0,0,0],"sq":["108年 第22題｜依建築法之規定，直轄市、縣（市）（局）主管建築機關，應指定已經公告道路之境界線為？ 高度限制線 鄰棟界線 基樁界線 建築線","108年 第30題｜依建築技術規則建築構造編第 100 條規定，基樁以整支應用為原則，樁必須接合施工時，其接頭應 至少不得在基礎版面下多少公尺以內，且樁接頭不得發生脫節或彎曲之現象？ 5 4…"]},{"name":"第四章 磚構造及木構造","avg":0.0,"avg3":0.0,"count":0,"grade":"D","trend":"flat","yrs":[0,0,0,0,0,0,0,0,0,0],"sq":[]}]},{"name":"營造業法","grade":"B","avg":4.2,"avg3":5.0,"trend":"flat","total":42,"readMin":45,"group":"工程發包執行","topics":[{"name":"各章通則｜一般規定","avg":2.6,"avg3":4.0,"count":26,"grade":"A","trend":"flat","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第61題｜依營造業法規定，營造業的分類及許可，下列敘述何者正確？ 綜合營造業分為甲、乙、丙及丁四等 營造業分綜合營造業、專業營造業及建築設計業 土木包工業應於原登記直轄市、縣（市）…","114年 第62題｜依營造業法規定，綜合營造業承攬之營繕工程或專業工程項目，交由專業營造業承攬，其轉交工程相 關規定，下列敘述何者錯誤？ 施工責任由原承攬之綜合營造業負責 受轉交之專業營造業…"]},{"name":"第二章 申請許可｜第6–11條 分類分級","avg":1.5,"avg3":2.0,"count":15,"grade":"B","trend":"flat","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第61題｜依營造業法規定，營造業的分類及許可，下列敘述何者正確？ 綜合營造業分為甲、乙、丙及丁四等 營造業分綜合營造業、專業營造業及建築設計業 土木包工業應於原登記直轄市、縣（市）…","114年 第62題｜依營造業法規定，綜合營造業承攬之營繕工程或專業工程項目，交由專業營造業承攬，其轉交工程相 關規定，下列敘述何者錯誤？ 施工責任由原承攬之綜合營造業負責 受轉交之專業營造業…"]},{"name":"第三章 工程負責人｜第30–32條 專任工程人員","avg":1.1,"avg3":1.3,"count":11,"grade":"C","trend":"flat","yrs":[0,1,1,1,0,1,1,1,1,1],"sq":["114年 第61題｜依營造業法規定，營造業的分類及許可，下列敘述何者正確？ 綜合營造業分為甲、乙、丙及丁四等 營造業分綜合營造業、專業營造業及建築設計業 土木包工業應於原登記直轄市、縣（市）…","113年 第62題｜依營造業法規定，下列敘述何者錯誤？ 營造業負責人不得為其他營造業之負責人、專任工程人員或工地主任 技術士應於工地現場依其專長技能及作業規範進行施工操作或品質控管 營造業之…"]},{"name":"第三章 工程負責人｜第33–36條 工地主任","avg":1.0,"avg3":1.0,"count":10,"grade":"C","trend":"flat","yrs":[1,1,1,1,1,1,0,0,1,1],"sq":["114年 第63題｜依營造業法施行細則規定，某營造廠欲承攬下列何種規模之工程，應置工地主任？ 承攬金額新臺幣 4000 萬元之工程 建築物高度 32 公尺之工程 建築物地下室開挖 12 公尺…","113年 第5題｜依建築法規定，建築工程中必須勘驗部分，應由直轄市、縣（市）主管建築機關於核定建築計畫時， 指定由承造人會同下列何者按時申報後，方得繼續施工？ 設計人 監造人 起造人 工地…"]},{"name":"第二章 申請許可｜資本額承攬限額","avg":0.4,"avg3":0.7,"count":4,"grade":"C","trend":"flat","yrs":[0,0,0,0,1,0,1,0,1,1],"sq":["114年 第64題｜依營造業法相關法規規定，有關營造業承攬之敘述，下列何者錯誤？ 營造業聯合承攬工程時，其承攬金額按契約之各營造業聯合承攬協議書所載出資比例分別計算 營造業承攬工程契約約定之…","113年 第60題｜營造業法所稱資本額，於營造業以股份有限公司設立者，係指下列何者？ 實收資本額 應收資本額 登記資本額 交易資本額"]},{"name":"第六章 罰則｜罰則與評鑑","avg":0.4,"avg3":0.3,"count":4,"grade":"D","trend":"flat","yrs":[1,0,1,0,0,1,0,1,0,0],"sq":["112年 第69題｜依營造業法規定，評鑑為第一級之營造業，並經主管機關或經中央主管機關認可之相關機關（構）辦 理複評合格之優良營造業，承攬政府工程時，申領工程預付款，可增加百分之多少？ 10…","110年 第60題｜依優良營造業複評及獎勵辦法規定，不得複評為優良營造業者不包含下列何者？ 違反建築法受處分者 違反公平交易法受處分者 違反都市計畫法受處分者 違反區域計畫法受處分者"]},{"name":"第四章 施工管理｜聯合承攬","avg":0.3,"avg3":0.3,"count":3,"grade":"D","trend":"flat","yrs":[0,1,0,0,1,0,0,0,0,1],"sq":["114年 第64題｜依營造業法相關法規規定，有關營造業承攬之敘述，下列何者錯誤？ 營造業聯合承攬工程時，其承攬金額按契約之各營造業聯合承攬協議書所載出資比例分別計算 營造業承攬工程契約約定之…","109年 第71題｜依營造業法之規定，聯合承攬協議書之內容，下列何者正確？ 工作範圍、出資比率、權利義務 工作範圍、出資比率、材料等級 出資比率、材料等級、權利義務 工作範圍、權利義務、材料…"]}]},{"name":"公寓大廈管理條例","grade":"B","avg":4.8,"avg3":3.7,"trend":"up","total":48,"readMin":45,"group":"建築物使用管理","topics":[{"name":"第三章 管理組織｜區分所有權人會議","avg":2.0,"avg3":2.0,"count":20,"grade":"B","trend":"flat","yrs":[0,1,1,1,1,1,1,1,1,1],"sq":["114年 第58題｜某通信業務經營者擬租用其公司登記地之公寓大廈屋頂平臺裝置行動通信網路業務基地臺，在規約無 限制條件之情形下，依公寓大廈管理條例，仍須符合什麼要件？ 須經管理委員會同意 須…","113年 第58題｜直轄市、縣（市）政府得組設公寓大廈爭議事件調處委員會，下列何者非屬應不予受理調處事項？ 當事人無從通知者 調處事件不屬受理機關管轄者 管理委員會未執行區分所有權人會議決議…"]},{"name":"第三章 管理組織｜第28–34條 管理委員會","avg":2.1,"avg3":1.7,"count":21,"grade":"B","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第58題｜某通信業務經營者擬租用其公司登記地之公寓大廈屋頂平臺裝置行動通信網路業務基地臺，在規約無 限制條件之情形下，依公寓大廈管理條例，仍須符合什麼要件？ 須經管理委員會同意 須…","113年 第58題｜直轄市、縣（市）政府得組設公寓大廈爭議事件調處委員會，下列何者非屬應不予受理調處事項？ 當事人無從通知者 調處事件不屬受理機關管轄者 管理委員會未執行區分所有權人會議決議…"]},{"name":"第一章 總則｜第3–10條 共用部分","avg":2.2,"avg3":1.3,"count":22,"grade":"B","trend":"up","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第70題｜依建築技術規則規定，為便利行動不便者進出及使用建築物，新建或增建建築物，應依規定設置無障 礙設施，下列敘述何者正確？ 獨棟或連棟建築物，該棟自地面層至最上層屬 2 戶以上…","113年 第34題｜建築技術規則有關無障礙建築物之規定，下列敘述何者錯誤？ 新建或增建建築物，應依規定設置無障礙設施，但供住宅使用之公寓大廈專有及約定專用部分者， 不在此限 新建或增建建築物…"]},{"name":"第四章 管理服務人｜規約","avg":0.5,"avg3":0.7,"count":5,"grade":"C","trend":"flat","yrs":[0,0,1,0,0,0,1,1,0,1],"sq":["114年 第58題｜某通信業務經營者擬租用其公司登記地之公寓大廈屋頂平臺裝置行動通信網路業務基地臺，在規約無 限制條件之情形下，依公寓大廈管理條例，仍須符合什麼要件？ 須經管理委員會同意 須…","112年 第62題｜某公寓大廈屋頂平台擬設置高度 7 公尺之樹立廣告，其申請審查許可之規定，下列敘述何者錯誤？ 應備具申請書及設計圖說，並委由開業建築師申請雜項執照 廣告招牌燈之裝設，應依建…"]},{"name":"第五章 經費｜第35–38條 管理費","avg":0.3,"avg3":0.3,"count":3,"grade":"D","trend":"flat","yrs":[0,1,0,0,1,0,0,1,0,0],"sq":["112年 第61題｜直轄市、縣（市）政府得組設公寓大廈爭議事件調處委員會，但申請調處案件如有下列何種情形者， 應不予調處？ 區分所有權人或住戶積欠管理費事件 有關管理委員選任事項之爭議事件 …","109年 第4題｜甲在某社區居住 20 年，每年均按月繳交管理費納入公共基金，今年甲因搬家而出售位於該社區之房 地之產權給乙，試問甲對於該公共基金之權利應如何處理？ 用剩的部分返還給甲 抵…"]}]},{"name":"國土計畫法","grade":"B","avg":2.8,"avg3":4.7,"trend":"up","total":28,"readMin":45,"group":"土地計畫三層","topics":[{"name":"第三章 全國國土計畫｜第9–13條","avg":2.8,"avg3":4.7,"count":28,"grade":"A","trend":"up","yrs":[0,0,1,1,1,1,1,1,1,1],"sq":["114年 第49題｜依國土計畫法與區域計畫法之規定，下列敘述何者正確？ 全國國土計畫公告實施之日起，區域計畫法不再適用 直轄市、縣（市）國土計畫公告實施之日起，區域計畫法不再適用 全國國土計…","114年 第50題｜依國土計畫法規定，國土計畫核定、公告實施及復議，下列敘述何者錯誤？ 國土計畫經核定後，擬訂機關應於接到核定公文之日起 30 日內公告實施 國土計畫公告實施應將計畫函送各有…"]},{"name":"第四章 國土功能分區｜第20–24條","avg":1.1,"avg3":2.0,"count":11,"grade":"C","trend":"flat","yrs":[0,0,1,1,0,1,1,1,1,0],"sq":["113年 第52題｜依國土計畫法規定，土地於符合國土功能分區使用及其分類之使用原則下，得申請使用許可。其程序 下列何者正確？ 使用許可之申請由中央主管機關受理 申請許可範圍屬國土保育地區或海…","113年 第53題｜下列何者是直轄市、縣（市）國土計畫審議會應辦理事項？ 國土復育促進地區之劃定及擬訂復育計畫之審議 國土保育地區之使用許可、許可變更及廢止之審議 海洋資源地區之使用許可、許…"]}]},{"name":"區域計畫法","grade":"B","avg":3.9,"avg3":2.7,"trend":"flat","total":39,"readMin":30,"group":"土地計畫三層","topics":[{"name":"相關規則｜非都市土地使用管制","avg":3.9,"avg3":2.7,"count":39,"grade":"A","trend":"flat","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第49題｜依國土計畫法與區域計畫法之規定，下列敘述何者正確？ 全國國土計畫公告實施之日起，區域計畫法不再適用 直轄市、縣（市）國土計畫公告實施之日起，區域計畫法不再適用 全國國土計…","114年 第52題｜依區域計畫法之規定，下列何者不是區域計畫應表明事項？ 人口及經濟成長、土地使用、運輸需要、資源開發等預測 自然資源之開發及保育 土地分區使用計畫及土地分區管制 老樹保存計…"]}]},{"name":"建築物室內裝修管理辦法","grade":"B","avg":3.0,"avg3":3.0,"trend":"flat","total":30,"readMin":30,"group":"建築物使用管理","topics":[{"name":"第一章 總則｜第1–5條 適用範圍與定義","avg":2.7,"avg3":2.7,"count":27,"grade":"B","trend":"flat","yrs":[1,1,1,1,1,1,1,1,1,1],"sq":["114年 第10題｜依建築物室內裝修管理辦法規定，有關室內裝修圖說的署名及簽證，下列敘述何者正確？ 室內裝修圖說應一律由開業建築師署名負責 室內裝修圖說應一律由專業設計技術人員（非開業建築師…","114年 第37題｜依建築技術規則規定，建築物室內裝修材料、樓地板面材料及窗，其綠建材使用率最少應達總面積百 分之多少以上，但窗未使用綠建材者，得不計入總面積檢討？ 30 45 60 75"]},{"name":"第四章 許可申請｜第22–29條 申請程序","avg":0.7,"avg3":1.3,"count":7,"grade":"C","trend":"flat","yrs":[1,0,0,1,0,0,0,1,1,0],"sq":["113年 第7題｜依建築法規定，建築物室內裝修應遵守之規定，不包含下列何者？ 供公眾使用建築物之室內裝修應申請審查許可 不得妨害或破壞防火避難設施、消防設備、防火區劃及主要構造 不得妨害或…","113年 第10題｜有關「室內裝修業」之管理規定，下列敘述何者錯誤？ 室內裝修業從事室內裝修設計業務者，應置有專業設計技術人員 1 人以上 室內裝修業應先辦理公司或商業登記後，再向內政部申請…"]},{"name":"第三章 審查機構｜第15–21條 圖說簽證","avg":0.8,"avg3":1.0,"count":8,"grade":"C","trend":"flat","yrs":[1,1,0,1,0,0,1,1,0,1],"sq":["114年 第10題｜依建築物室內裝修管理辦法規定，有關室內裝修圖說的署名及簽證，下列敘述何者正確？ 室內裝修圖說應一律由開業建築師署名負責 室內裝修圖說應一律由專業設計技術人員（非開業建築師…","112年 第15題｜室內裝修專業技術人員有下列何種情事，當地主管建築機關應查明屬實後，報請內政部廢止登記許可 並註銷登記證？ 受委託設計之圖樣、說明書、竣工查驗合格簽章之檢查表或其他書件經抽…"]},{"name":"第二章 從業者管理｜材料限制","avg":0.7,"avg3":0.3,"count":7,"grade":"C","trend":"flat","yrs":[1,0,1,1,1,0,1,0,0,1],"sq":["114年 第37題｜依建築技術規則規定，建築物室內裝修材料、樓地板面材料及窗，其綠建材使用率最少應達總面積百 分之多少以上，但窗未使用綠建材者，得不計入總面積檢討？ 30 45 60 75","111年 第16題｜供公眾使用建築物及經內政部認定有必要之非供公眾使用建築物，依建築物室內裝修管理辦法規定， 下列敘述何者錯誤？ 室內裝修材料應合於建築技術規則之規定，且不得妨害或破壞防火避…"]}]},{"name":"山坡地建築管理辦法","grade":"C","avg":2.7,"avg3":1.7,"trend":"flat","total":27,"readMin":30,"group":"獨立法規","topics":[{"name":"各條｜山坡地建築管理","avg":2.7,"avg3":1.7,"count":27,"grade":"B","trend":"flat","yrs":[1,1,1,1,1,1,1,1,0,1],"sq":["114年 第15題｜依山坡地建築管理辦法規定，有關從事山坡地建築，下列敘述何者錯誤？ 本辦法所稱山坡地係指直轄市、縣（市）政府依山坡地保育利用條例第 3 條規定劃定，報請當地都 市計畫委員會…","114年 第34題｜依建築技術規則規定，山坡地基地需繪製實測地形圖計算平均坡度，其圖面比例尺至少不得小於多少？ 1/500 1/1000 1/1200 1/1500"]}]},{"name":"農業用地興建農舍辦法","grade":"C","avg":1.6,"avg3":2.7,"trend":"flat","total":16,"readMin":20,"group":"獨立法規","topics":[{"name":"各條｜農舍興建規定","avg":1.6,"avg3":2.7,"count":16,"grade":"B","trend":"up","yrs":[1,0,1,1,1,0,1,1,1,1],"sq":["114年 第74題｜下列何項法規之修正，應經立法院通過，總統公布？ 公寓大廈管理條例 建築技術規則 農業用地興建農舍辦法 營造業法施行細則","114年 第80題｜在非離島地區申請興建個別農舍，下列敘述何者不符農業用地興建農舍辦法之規定？ 興建之農舍，得免設置建築物污水處理設施 農舍興建圍牆，不得超過農舍用地面積範圍 地下層每層興建…"]}]},{"name":"建築物使用類組及變更使用辦法","grade":"C","avg":1.8,"avg3":2.3,"trend":"up","total":18,"readMin":20,"group":"建築物使用管理","topics":[{"name":"各條｜使用類組變更使用","avg":1.8,"avg3":2.3,"count":18,"grade":"B","trend":"up","yrs":[1,1,1,1,0,1,1,1,1,1],"sq":["114年 第8題｜依建築法規定，建築法施行前，供公眾使用之建築物而未領有使用執照者，其所有權人應申請核發使 用執照，其使用執照之核發及安全處理，由直轄市、縣（市）政府於下列何者定之？ 建築…","114年 第12題｜依建築物使用類組及變更使用辦法規定，有關變更使用執照相關期限，下列敘述何者錯誤？ 建築物申請變更使用經主管建築機關審查合格後，其須施工者，發給同意變更文件時應核定施工期 …"]}]},{"name":"文化資產保存法","grade":"C","avg":1.3,"avg3":1.7,"trend":"flat","total":13,"readMin":30,"group":"獨立法規","topics":[{"name":"第三章 古蹟歷史建築｜指定登錄保護","avg":1.3,"avg3":1.7,"count":13,"grade":"C","trend":"flat","yrs":[1,1,0,1,1,1,1,1,1,1],"sq":["114年 第77題｜依文化資產保存法規定，若建造物經列為暫定古蹟，致權利人之財產受有損失，主管機關應給與合理 補償，其補償金額如何計價？ 由主管機關與古蹟權利人協議定之 按建築物之評定標準價…","114年 第79題｜依文化資產保存法規定，下列敘述何者錯誤？ 古蹟、歷史建築之中央主管機關為文化部；自然地景之中央主管機關為環境部 主管機關得就古蹟保存計畫內容，依區域計畫法、都市計畫法或國…"]}]},{"name":"都市危險及老舊建築物加速重建條例","grade":"C","avg":1.3,"avg3":1.0,"trend":"flat","total":13,"readMin":20,"group":"都市更新雙法","topics":[{"name":"各條｜危老重建","avg":1.3,"avg3":1.0,"count":13,"grade":"C","trend":"up","yrs":[0,0,0,1,1,1,1,0,1,1],"sq":["114年 第78題｜依都市危險及老舊建築物加速重建條例規定，如某基地符合本條例之合法建築物基地面積為 1200 平 方公尺，並合併鄰接之土地面積 1500 平方公尺辦理重建，其適用本條例建築…","113年 第78題｜依都市危險及老舊建築物建築容積獎勵辦法規定，建築物取得耐震設計標章，其容積獎勵額度為基準 容積百分之多少？ 5 10 15 20"]}]},{"name":"國家公園法","grade":"C","avg":1.1,"avg3":1.3,"trend":"flat","total":11,"readMin":20,"group":"獨立法規","topics":[{"name":"第三章 公園計畫｜第14–15條 分區管制","avg":1.1,"avg3":1.3,"count":11,"grade":"C","trend":"flat","yrs":[1,1,0,0,1,1,1,1,1,1],"sq":["114年 第55題｜依國家公園法規定，下列何種行為須經國家公園管理處許可，方可為之？ 焚燬草木或引火整地 放牧牲畜 於樹木、岩石及標示牌加刻文字或圖形 任意拋棄果皮、紙屑或其他污物","114年 第79題｜依文化資產保存法規定，下列敘述何者錯誤？ 古蹟、歷史建築之中央主管機關為文化部；自然地景之中央主管機關為環境部 主管機關得就古蹟保存計畫內容，依區域計畫法、都市計畫法或國…"]}]},{"name":"中央法規標準法","grade":"C","avg":0.8,"avg3":1.7,"trend":"flat","total":8,"readMin":15,"group":"獨立法規","topics":[{"name":"第二章 法規之制定｜法規位階施行","avg":0.8,"avg3":1.7,"count":8,"grade":"C","trend":"flat","yrs":[0,0,1,0,1,1,0,1,1,1],"sq":["114年 第8題｜依建築法規定，建築法施行前，供公眾使用之建築物而未領有使用執照者，其所有權人應申請核發使 用執照，其使用執照之核發及安全處理，由直轄市、縣（市）政府於下列何者定之？ 建築…","114年 第74題｜下列何項法規之修正，應經立法院通過，總統公布？ 公寓大廈管理條例 建築技術規則 農業用地興建農舍辦法 營造業法施行細則"]}]},{"name":"住宅法","grade":"D","avg":0.7,"avg3":1.3,"trend":"flat","total":7,"readMin":15,"group":"獨立法規","topics":[{"name":"第三章 社會住宅｜第27–49條","avg":0.7,"avg3":1.3,"count":7,"grade":"C","trend":"flat","yrs":[0,0,0,1,1,1,0,0,1,1],"sq":["114年 第75題｜下列何者非住宅法規定主管機關新建社會住宅之方式？ 將公有土地按當期土地公告現值讓售予民間興建 以公有土地或建築物參與都市更新分回建築物及其基地 合建分屋 直接興建","113年 第23題｜下列何者非屬住宅法所規定主管機關應定期蒐集、分析及公布之住宅資訊？ 租賃與買賣住宅市場之供給、需求 違章建築分布之範圍 經濟或社會弱勢者之住宅補貼政策成效 居住品質狀況"]}]},{"name":"消防法","grade":"D","avg":0.7,"avg3":0.3,"trend":"flat","total":7,"readMin":20,"group":"獨立法規","topics":[{"name":"第二章 消防設備｜設備設置規定","avg":0.7,"avg3":0.3,"count":7,"grade":"C","trend":"flat","yrs":[1,1,1,0,0,0,1,0,1,0],"sq":["113年 第7題｜依建築法規定，建築物室內裝修應遵守之規定，不包含下列何者？ 供公眾使用建築物之室內裝修應申請審查許可 不得妨害或破壞防火避難設施、消防設備、防火區劃及主要構造 不得妨害或…","111年 第16題｜供公眾使用建築物及經內政部認定有必要之非供公眾使用建築物，依建築物室內裝修管理辦法規定， 下列敘述何者錯誤？ 室內裝修材料應合於建築技術規則之規定，且不得妨害或破壞防火避…"]}]},{"name":"環境影響評估法","grade":"D","avg":0.4,"avg3":0.3,"trend":"flat","total":4,"readMin":10,"group":"獨立法規","topics":[{"name":"第二章 評估｜環評程序","avg":0.4,"avg3":0.3,"count":4,"grade":"D","trend":"flat","yrs":[0,0,0,1,0,0,0,1,0,0],"sq":["112年 第25題｜依山坡地建築管理辦法第 4 條，起造人申請雜項執照，下列何者非為必要檢附的文件？ 申請書、土地權利證明文件、工程圖樣及說明書 建築物平面圖與立面圖 水土保持計畫核定證明文…","108年 第1題｜依開發行為應實施環境影響評估細目及範圍認定標準第 26 條規定，高樓建築其高度至少多少公尺以 上者應實施環境影響評估？ 60 90 120 150"]}]}];
+
+const RGROUPS=[
+  {id:"g1",icon:"🏗",name:"建築許可核心",note:"建築法→建築師法，角色責任互補",laws:["建築法","建築師法"]},
+  {id:"g2",icon:"📐",name:"建築技術規則三編",note:"施工編用語定義先讀熟，再接構造編與設備編",laws:["建築技術規則施工編","建築技術規則構造編","建築技術規則設備編"]},
+  {id:"g3",icon:"🗺",name:"土地計畫三層",note:"國土→區域→都市，由上而下讀",laws:["國土計畫法","區域計畫法","都市計畫法"]},
+  {id:"g4",icon:"🏘",name:"都市更新雙法",note:"都更vs危老差異對照讀",laws:["都市更新條例","都市危險及老舊建築物加速重建條例"]},
+  {id:"g5",icon:"🔑",name:"建築物使用管理",note:"使用執照後的管理規定",laws:["建築物室內裝修管理辦法","公寓大廈管理條例","建築物使用類組及變更使用辦法"]},
+  {id:"g6",icon:"📋",name:"工程發包執行",note:"採購法（發包）↔ 營造業法（資格）",laws:["政府採購法","營造業法"]},
+  {id:"g7",icon:"📚",name:"獨立法規",note:"各自獨立，穿插在主要群組後處理",laws:["建築物無障礙設施設計規範","山坡地建築管理辦法","文化資產保存法","國家公園法","消防法","農業用地興建農舍辦法","中央法規標準法","住宅法","環境影響評估法"]},
+];
+
+const GC={
+  A:{name:"朱",bg:"var(--A-bg)",bd:"#C83828",tx:"var(--A-tx)",lx:"var(--A-lx)",desc:"必考核心",cut:"加權≥5.0"},
+  B:{name:"山吹",bg:"var(--B-bg)",bd:"#B88000",tx:"var(--B-tx)",lx:"var(--B-lx)",desc:"高頻重點",cut:"加權2.5–4.9"},
+  C:{name:"浅葱",bg:"var(--C-bg)",bd:"#1E7878",tx:"var(--C-tx)",lx:"var(--C-lx)",desc:"中頻整理",cut:"加權1.0–2.4"},
+  D:{name:"鼠",bg:"var(--D-bg)",bd:"#747468",tx:"var(--D-tx)",lx:"var(--D-lx)",desc:"低頻掃過",cut:"加權<1.0"},
+};
+
+const STAGES=[
+  {sym:"○",lbl:"未讀",cls:"s0",col:"#C8C5B0"},
+  {sym:"◐",lbl:"粗讀",cls:"s1",col:"#5A7A9A"},
+  {sym:"◉",lbl:"筆記完成",cls:"s2",col:"#4A7040"},
+  {sym:"★",lbl:"熟背",cls:"s3",col:"#B88000"},
+];
+
+const YEARS=['105','106','107','108','109','110','111','112','113','114'];
+
+// ── State ─────────────────────────────────────────────────
+let S={
+  mainV:"freq", curLaw:0, detailV:null,
+  og:{A:true,B:false,C:false,D:false},
+  og2:{g1:true,g2:false,g3:false,g4:false,g5:false,g6:false,g7:false},
+  filter:null, // null | "err" | "A" | "rise" | "unread" | "unfin"
+  read:new Set(), mat:{}, err:new Set(), sqOpen:new Set()
+};
+
+function load(){
+  try{
+    var r=localStorage.getItem("lcm_r6"); if(r) S.read=new Set(r.split(",").filter(function(x){return x;}).map(Number));
+    var m=localStorage.getItem("lcm_m6"); if(m) S.mat=JSON.parse(m);
+    var e=localStorage.getItem("lcm_e6"); if(e) S.err=new Set(e.split(",").filter(function(x){return x;}));
+  }catch(e){}
+}
+function saveAll(){
+  try{
+    localStorage.setItem("lcm_r6",[...S.read].join(","));
+    localStorage.setItem("lcm_m6",JSON.stringify(S.mat));
+    localStorage.setItem("lcm_e6",[...S.err].join(","));
+  }catch(e){}
+}
+function confirmReset(){if(confirm("確定重置所有進度與標記？")){S.read=new Set();S.mat={};S.err=new Set();S.sqOpen=new Set();saveAll();render();}}
+
+// ── Helpers ───────────────────────────────────────────────
+const lgG = g => LAWS.map((l,i)=>({...l,i})).filter(l=>l.grade===g);
+const tTotal = () => LAWS.reduce((a,l)=>a+l.topics.length, 0);
+const tRM = () => LAWS.reduce((a,l)=>a+l.readMin, 0);
+const dRM = () => [...S.read].reduce(function(a,i){return a+((LAWS[i]&&LAWS[i].readMin)||0);}, 0);
+const getMat = (li,ti) => S.mat[`${li}_${ti}`]||0;
+const isErr = (li,ti) => S.err.has(`${li}_${ti}`);
+const stageCounts = () => {
+  const c=[0,0,0,0]; const tt=tTotal();
+  Object.values(S.mat).forEach(v=>{ if(v>=0&&v<=3) c[v]++; });
+  c[0]=tt-c[1]-c[2]-c[3]; return c;
+};
+
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function chkEl(on,fn){return`<div class="chk" style="border-color:${on?"#4A7040":"var(--border)"};background:${on?"#4A7040":"transparent"}" onclick="${fn}">${on?'<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#FFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':""}</div>`}
+function bdg(g,f){return`<span class="badge" style="background:${f?GC[g].bd:"transparent"};border:.5px solid ${GC[g].bd};color:${f?"#FFF":GC[g].tx}">${g}</span>`}
+function gbdg(g){return`<span class="badge" style="border:.5px solid ${GC[g].bd};color:${GC[g].tx};background:transparent">${GC[g].name}</span>`}
+
+// Compact avg: "10Y 7.8 ｜ 3Y 9.2"
+function avgB(g,avg,avg3){
+  return`<span class="avgb" style="background:${GC[g].lx};border-color:${GC[g].bd}50;color:${GC[g].tx}">10Y ${avg} ｜ 3Y ${avg3}</span>`;
+}
+
+// Stage button (4 stages)
+function stgBtn(li,ti){
+  const m=getMat(li,ti),st=STAGES[m];
+  return`<button class="stg ${st.cls}" onclick="nextStage(${li},${ti})" title="點擊切換下一階段">${st.sym} ${st.lbl}</button>`;
+}
+// Error flag toggle
+function errBtn(li,ti){
+  const on=isErr(li,ti);
+  return`<button class="eflag ${on?"on":"off"}" onclick="togErr(${li},${ti})" title="${on?"取消標記":"標記為易錯"}">⚠</button>`;
+}
+
+// Year dots
+function yrDots(yrs,g){
+  const col=GC[g].bd;
+  return`<div class="ydots"><span class="ylbl">出題</span>${yrs.map((v,i)=>`<div class="ydot" title="${YEARS[i]}年" style="background:${v?col:"#D8D5CC"}"></div>`).join("")}</div>`;
+}
+
+// Question preview: truncate at ？ for preview
+function sqPreview(text){
+  const qi=text.indexOf("？");
+  if(qi>=0&&qi<=70) return text.slice(0,qi+1);
+  return text.slice(0,60)+(text.length>60?"…":"");
+}
+
+function sqHtml(li,ti,sq){
+  if(!sq||!sq.length) return "";
+  const key=`${li}_${ti}`, isOpen=S.sqOpen.has(key);
+  let inner="";
+  if(isOpen){
+    inner=`<div class="sq-block">${sq.map(s=>{
+      const p=s.indexOf("｜"),meta=p>=0?s.slice(0,p):"",txt=p>=0?s.slice(p+1):s;
+      return`<div class="sq-item"><span class="sq-meta">${esc(meta)}</span><span>${esc(txt)}</span></div>`;
+    }).join("")}</div>`;
+  } else {
+    // Single-line preview: show first question truncated at ？
+    const first=sq[0], p=first.indexOf("｜"), meta=p>=0?first.slice(0,p):"", txt=p>=0?first.slice(p+1):first;
+    inner=`<span style="font-size:10px;color:var(--text3);margin-left:2px">${esc(meta)} · ${esc(sqPreview(txt))}</span>`;
+  }
+  return`<button class="sq-toggle" onclick="togSQ('${key}')">${isOpen?"▲":"▼"}</button>${inner}`;
+}
+
+// ── Filter logic ───────────────────────────────────────────
+function topicPassesFilter(li,ti,topic){
+  if(!S.filter) return true;
+  if(S.filter==="err") return isErr(li,ti);
+  if(S.filter==="A") return topic.grade==="A";
+  if(S.filter==="rise") return topic.avg3>topic.avg;
+  if(S.filter==="unread") return getMat(li,ti)===0;
+  if(S.filter==="unfin") return getMat(li,ti)<3;
+  return true;
+}
+function lawPassesFilter(law,li){
+  if(!S.filter) return true;
+  return law.topics.some((_,ti)=>topicPassesFilter(li,ti,law.topics[ti]));
+}
+
+// ── Header update ─────────────────────────────────────────
+function updateHdr(){
+  const tl=LAWS.length, tt=tTotal(), nr=S.read.size, tR=tRM(), dR=dRM();
+  const sc=stageCounts(), errCnt=S.err.size;
+
+  // Tabs
+  ["freq","grp","sprint"].forEach(v=>{
+    const el=document.getElementById(`t-${v}`);
+    if(el) el.classList.toggle("on",S.mainV===v&&S.detailV===null);
+  });
+
+  // Filter pills (only show when not in sprint and not in detail)
+  const showFilters = S.detailV===null && S.mainV!=="sprint";
+  const filterDefs=[
+    {id:"err",lbl:"⚠ 易錯",cls:"fpill-err"},
+    {id:"A",lbl:"A 必考",cls:"fpill-A"},
+    {id:"rise",lbl:"3Y↑ 上升",cls:"fpill-rise"},
+    {id:"unread",lbl:"○ 未讀",cls:"fpill-unread"},
+    {id:"unfin",lbl:"◐ 未熟背",cls:"fpill-unfin"},
+  ];
+  document.getElementById("filters").innerHTML = showFilters
+    ? filterDefs.map(f=>`<button class="fpill ${f.cls} ${S.filter===f.id?"on":""}" onclick="setFilter('${f.id}')">${f.lbl}</button>`).join("")
+    : "";
+
+  // Chips
+  document.getElementById("chips").innerHTML=["A","B","C","D"].map(g=>{
+    const ls=lgG(g), dn=ls.filter(l=>S.read.has(l.i)).length;
+    return`<div class="chip" style="background:${GC[g].bg};border-color:${GC[g].bd}40">${bdg(g,true)}<span style="color:${GC[g].tx};font-weight:500">${GC[g].name}</span><span style="color:var(--text2)">${dn}/${ls.length}</span></div>`;
+  }).join("")+`<div style="margin-left:auto;font-size:10px;color:var(--text2);align-self:center">筆記${sc[2]+sc[3]}/${tt} ⚠${errCnt}</div>`;
+
+  // Stage bar
+  const stageCols=["#C8C5B040","#5A7A9A","#4A7040","#B88000"];
+  document.getElementById("sbar").innerHTML=STAGES.map((st,i)=>
+    `<div class="sbar-seg" style="width:${sc[i]/tt*100}%;background:${stageCols[i]}"></div>`
+  ).join("");
+  document.getElementById("pb2").style.width=`${nr/tl*100}%`;
+  document.getElementById("pl1").innerHTML=
+    `粗讀 ${nr}/${tl} · ${dR}/${tR}min &nbsp;·&nbsp; `+
+    STAGES.map((st,i)=>`<span style="color:${stageCols[i].replace("40","")}">${st.sym}${sc[i]}</span>`).join(" ")+
+    (errCnt>0?` &nbsp;<span style="color:var(--err-c)">⚠${errCnt}</span>`:"");
+  document.getElementById("pl2").textContent="↑ 條款熟悉進度";
+}
+
+// ── Law row HTML ──────────────────────────────────────────
+function lawRowHtml(i,name,grade,avg,avg3,trend,readMin,topics,rowCls){
+  const iR=S.read.has(i), gc=GC[grade];
+  const sc2=[0,0,0,0]; topics.forEach((_,ti)=>{const m=getMat(i,ti);if(m<=3)sc2[m]++;});
+  const finCnt=sc2[2]+sc2[3], errCnt=topics.filter((_,ti)=>isErr(i,ti)).length;
+  return`<div class="${rowCls||"lrow"} ${iR?"faded":""}" style="background:${iR?"#EEF5F0":"transparent"}">
+    ${chkEl(iR,`tR(${i})`)}
+    <span style="flex:1;font-size:12.5px;font-weight:500;min-width:0;text-decoration:${iR?"line-through":"none"};color:${iR?"#6A7A6A":"var(--text)"}">${esc(name)}</span>
+    ${avgB(grade,avg,avg3)}
+    <span style="font-size:10px;color:var(--text3)">${readMin}min</span>
+    ${finCnt>0?`<span class="tag" style="background:#EEF5F0;border:.5px solid #8AB08A;color:#4A7040">${finCnt}/${topics.length}</span>`:""}
+    ${errCnt>0?`<span class="tag" style="background:var(--err-bg);border:.5px solid var(--err-c);color:var(--err-c)">⚠${errCnt}</span>`:""}
+    <button class="bsm" style="border-color:${gc.bd};color:${gc.tx}" onclick="openLaw(${i})">條款 →</button>
+  </div>`;
+}
+
+// ── Frequency view ────────────────────────────────────────
+function renderFreq(){
+  let h="";
+  ["A","B","C","D"].forEach(g=>{
+    const allLaws=lgG(g), laws=S.filter?allLaws.filter(l=>lawPassesFilter(l,l.i)):allLaws;
+    if(!laws.length){
+      if(!S.filter) h+=`<div class="sect" style="background:var(--page)"><div class="sect-hd" onclick="togG('${g}')"><span class="caret">▶</span> ${bdg(g,true)} ${gbdg(g)} <span style="flex:1;font-size:12px;color:${GC[g].tx}">${GC[g].desc}</span></div></div>`;
+      return;
+    }
+    const isO=S.og[g], gc=GC[g], dn=laws.filter(l=>S.read.has(l.i)).length;
+    h+=`<div class="sect" style="background:${isO?gc.bg:"var(--page)"}">
+      <div class="sect-hd" style="background:${isO?gc.bg:"transparent"}" onclick="togG('${g}')">
+        ${bdg(g,true)} ${gbdg(g)}
+        <span style="flex:1;font-size:12.5px;font-weight:500;color:${gc.tx}">${gc.desc}</span>
+        <span style="font-size:10.5px;color:${gc.tx};opacity:.7">${gc.cut}</span>
+        <span style="font-size:10.5px;color:${gc.tx};opacity:.7;margin-left:5px">${dn}/${laws.length}</span>
+        <span class="caret" style="transform:${isO?"rotate(90deg)":"none"};color:${gc.tx}">▶</span>
+      </div>
+      ${isO?`<div class="sect-body anim">${laws.map(l=>lawRowHtml(l.i,l.name,l.grade,l.avg,l.avg3,l.trend,l.readMin,l.topics)).join("")}</div>`:""}
+    </div>`;
+  });
+  document.getElementById("main").innerHTML=h||`<div class="sprint-empty">目前篩選條件沒有符合的法規</div>`;
+}
+
+// ── Group view ────────────────────────────────────────────
+function renderGroups(){
+  let h="";
+  RGROUPS.forEach(grp=>{
+    const isO=S.og2[grp.id];
+    const allLaws=grp.laws.map(n=>LAWS.map((l,i)=>({...l,i})).find(l=>l.name===n)).filter(Boolean);
+    const laws=S.filter?allLaws.filter(l=>lawPassesFilter(l,l.i)):allLaws;
+    if(!laws.length) return;
+    const tRM2=allLaws.reduce((a,l)=>a+l.readMin,0), rc=allLaws.filter(l=>S.read.has(l.i)).length;
+    h+=`<div class="gcard">
+      <div class="ghd" onclick="togGrp('${grp.id}')">
+        <span style="font-size:16px;flex-shrink:0">${grp.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <span style="font-size:13px;font-weight:600">${esc(grp.name)}</span>
+            <span style="font-size:10px;color:var(--text3)">${rc}/${allLaws.length}粗讀</span>
+          </div>
+          <div style="font-size:10.5px;color:var(--text2);line-height:1.4">${esc(grp.note)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
+          <span style="font-size:10.5px;color:var(--text3)">${tRM2}min</span>
+          <span class="caret" style="transform:${isO?"rotate(90deg)":"none"}">▶</span>
+        </div>
+      </div>
+      ${isO?`<div class="gbody anim">${laws.map(l=>lawRowHtml(l.i,l.name,l.grade,l.avg,l.avg3,l.trend,l.readMin,l.topics,"grow")).join("")}</div>`:""}
+    </div>`;
+  });
+  document.getElementById("main").innerHTML=h||`<div class="sprint-empty">目前篩選條件沒有符合的法規</div>`;
+}
+
+// ── Sprint view ───────────────────────────────────────────
+function renderSprint(){
+  // Collect: A/B法規 + (⚠易錯 OR A/B條款 + 近3年上升 + 未熟背)
+  const items=[];
+  LAWS.forEach((law,li)=>{
+    if(law.grade!=="A"&&law.grade!=="B") return;
+    law.topics.forEach((t,ti)=>{
+      const key=`${li}_${ti}`, stage=getMat(li,ti), errFlag=isErr(li,ti);
+      const rising=t.avg3>t.avg, unfinished=stage<3;
+      if(errFlag||(( t.grade==="A"||t.grade==="B")&&rising&&unfinished)){
+        items.push({li,ti,law,topic:t,stage,errFlag,score:(errFlag?10:0)+(t.avg3||0)});
+      }
+    });
+  });
+  items.sort((a,b)=>b.score-a.score);
+
+  const sprintCount=items.length;
+  let h=`<div class="sprint-hd">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">⚡ 考前 Sprint 複習包</div>
+    <div style="font-size:11.5px;color:var(--text2);line-height:1.6">
+      自動篩選：<strong>⚠易錯</strong> ＋ <strong>A/B級條款 × 近3年↑ × 未熟背</strong><br>
+      共 <strong>${sprintCount}</strong> 個條款 · 建議每次30分鐘，完成後將條款標為★熟背
+    </div>
+  </div>`;
+
+  if(!sprintCount){
+    h+=`<div class="sprint-empty">🎉 目前沒有需要衝刺的條款<br><span style="font-size:11px">所有A/B級近3年熱門條款都已熟背，或尚未有⚠易錯標記</span></div>`;
+  } else {
+    // Group by law
+    const byLaw=new Map();
+    items.forEach(item=>{
+      const k=item.li;
+      if(!byLaw.has(k)) byLaw.set(k,[]);
+      byLaw.get(k).push(item);
+    });
+    byLaw.forEach((its,li)=>{
+      const law=LAWS[li],gc=GC[law.grade];
+      h+=`<div class="sect" style="border-color:${gc.bd}30">
+        <div style="display:flex;align-items:center;gap:6px;padding:7px 12px;background:${gc.bg};border-bottom:.5px solid ${gc.bd}20">
+          ${bdg(law.grade,true)}<span style="font-size:12.5px;font-weight:500">${esc(law.name)}</span>
+          <span style="font-size:10px;color:var(--text2);margin-left:auto">${its.length}條</span>
+        </div>`;
+      its.forEach(({ti,topic,stage,errFlag})=>{
+        const sep=topic.name.indexOf("｜"),sn=sep>=0?topic.name.slice(sep+1):topic.name;
+        const rowBg=errFlag?"var(--err-bg)":stage===3?"#FFFBF0":"transparent";
+        h+=`<div class="sprint-row" style="background:${rowBg}">
+          ${stgBtn(li,ti)} ${errBtn(li,ti)}
+          ${bdg(topic.grade,true)}
+          <span style="flex:1;font-size:12px;line-height:1.4;min-width:0">${esc(sn)}</span>
+          ${avgB(topic.grade,topic.avg,topic.avg3)}
+        </div>`;
+      });
+      h+="</div>";
+    });
+  }
+  document.getElementById("main").innerHTML=h;
+}
+
+// ── Topic detail ──────────────────────────────────────────
+function renderTopics(){
+  const law=LAWS[S.curLaw], gc=GC[law.grade];
+  const chapMap=new Map();
+  law.topics.forEach((t,ti)=>{
+    if(S.filter&&!topicPassesFilter(S.curLaw,ti,t)) return;
+    const sep=t.name.indexOf("｜"), chap=sep>=0?t.name.slice(0,sep):"其他", rest=sep>=0?t.name.slice(sep+1):t.name;
+    if(!chapMap.has(chap)) chapMap.set(chap,[]);
+    chapMap.get(chap).push({...t,ti,sn:rest});
+  });
+
+  let blocksH="";
+  chapMap.forEach((tps,chap)=>{
+    const rowsH=tps.map(({ti,sn,avg,avg3,grade,yrs,sq})=>{
+      const m=getMat(S.curLaw,ti), errF=isErr(S.curLaw,ti), gc2=GC[grade];
+      const rowBg=errF?"#FFF5F5":m===3?"#FFFBF0":m===2?"#F8FBF8":"transparent";
+      return`<div class="trow" style="background:${rowBg}">
+        <div class="trow-top">
+          ${stgBtn(S.curLaw,ti)} ${errBtn(S.curLaw,ti)}
+          ${bdg(grade,true)}
+          <span style="flex:1;font-size:12px;line-height:1.4;min-width:0;color:${m===0?"var(--text3)":"var(--text)"}">${esc(sn)}</span>
+          ${avgB(grade,avg,avg3)}
+        </div>
+        <div class="trow-bot">
+          ${yrDots(yrs,grade)}
+          ${sqHtml(S.curLaw,ti,sq)}
+        </div>
+      </div>`;
+    }).join("");
+    if(rowsH) blocksH+=`<div class="anim"><div class="chd">${esc(chap)}</div>${rowsH}</div>`;
+  });
+
+  const sc2=[0,0,0,0]; law.topics.forEach((_,ti)=>{const m=getMat(S.curLaw,ti);if(m<=3)sc2[m]++;});
+  const errCnt=law.topics.filter((_,ti)=>isErr(S.curLaw,ti)).length;
+  const stageCols=["#C8C5B040","#5A7A9A","#4A7040","#B88000"];
+
+  document.getElementById("main").innerHTML=`
+    <div class="bc">
+      <button onclick="backToList()" style="background:none;border:none;font-size:12px;color:var(--text2);cursor:pointer;padding:0;font-family:inherit">← 返回</button>
+      <span style="font-size:10px;color:#C0B8A8">/</span>
+      ${bdg(law.grade,true)}
+      <span style="font-size:13px;font-weight:500">${esc(law.name)}</span>
+      <span style="font-size:11px;color:var(--text2);margin-left:auto">10Y ${law.avg} ｜ 3Y ${law.avg3}</span>
+    </div>
+    <div class="sleg">
+      ${STAGES.map((st,i)=>`<span><span style="color:${stageCols[i].replace("40","")}; font-weight:700">${st.sym}</span>${st.lbl} ${sc2[i]}</span>`).join("")}
+      <span style="color:var(--err-c)">⚠易錯 ${errCnt}</span>
+      <span style="color:var(--text3)">點擊按鈕切換</span>
+    </div>
+    <div class="hint">📝 整理筆記請至 <strong>Claude.ai</strong> 對話，貼入條文即可依頻率生成 Notion 筆記</div>
+    <div class="sect" style="border-color:${gc.bd}30">${blocksH||`<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">目前篩選條件沒有符合的條款</div>`}</div>`;
+}
+
+// ── Actions ───────────────────────────────────────────────
+function setView(v){S.mainV=v;S.detailV=null;S.filter=null;render();}
+function setFilter(f){S.filter=S.filter===f?null:f;render();}
+function togG(g){S.og[g]=!S.og[g];render();}
+function togGrp(id){S.og2[id]=!S.og2[id];render();}
+function openLaw(li){S.curLaw=li;S.detailV="t";S.sqOpen=new Set();window.scrollTo(0,0);render();}
+function backToList(){S.detailV=null;render();}
+function tR(li){S.read.has(li)?S.read.delete(li):S.read.add(li);saveAll();render();}
+function nextStage(li,ti){const key=`${li}_${ti}`;S.mat[key]=(getMat(li,ti)+1)%4;saveAll();render();}
+function togErr(li,ti){const key=`${li}_${ti}`;S.err.has(key)?S.err.delete(key):S.err.add(key);saveAll();render();}
+function togSQ(key){S.sqOpen.has(key)?S.sqOpen.delete(key):S.sqOpen.add(key);render();}
+
+// ── Export progress ───────────────────────────────────────
+function exportProgress(){
+  const SN=["○ 未讀","◐ 粗讀","◉ 筆記完成","★ 熟背"];
+  const now=new Date(), ds=`${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+  const sc=stageCounts(), errCnt=S.err.size, nr=S.read.size, tl=LAWS.length, tt=tTotal();
+  let md=`# 法規備考進度記錄\n\n更新日期：${ds}\n\n`;
+  md+=`## 整體進度\n\n- 法規粗讀：${nr}／${tl}（${Math.round(nr/tl*100)}%）\n`;
+  md+=`- 條款：○${sc[0]} ◐${sc[1]} ◉${sc[2]} ★${sc[3]} ⚠${errCnt}\n\n---\n\n`;
+  ["A","B","C","D"].forEach(g=>{
+    const ls=lgG(g);
+    md+=`## ${g}級｜${GC[g].name}\n\n`;
+    ls.forEach(law=>{
+      const iR=S.read.has(law.i);
+      md+=`### ${iR?"[x]":"[ ]"} ${law.name}　10Y ${law.avg} ｜ 3Y ${law.avg3}\n\n`;
+      const chapMap=new Map();
+      law.topics.forEach((t,ti)=>{
+        const sep=t.name.indexOf("｜"),chap=sep>=0?t.name.slice(0,sep):"其他",rest=sep>=0?t.name.slice(sep+1):t.name;
+        if(!chapMap.has(chap))chapMap.set(chap,[]);chapMap.get(chap).push({...t,ti,sn:rest});
+      });
+      chapMap.forEach((tps,chap)=>{
+        md+=`**${chap}**\n\n`;
+        tps.forEach(({ti,sn,avg,avg3,grade})=>{
+          const m=getMat(law.i,ti),e=isErr(law.i,ti)?` ⚠`:"";
+          md+=`- ${SN[m]}${e}　${sn}　（${grade}級，10Y ${avg} ｜ 3Y ${avg3}）\n`;
+        });
+        md+="\n";
+      });
+    });
+  });
+  md+=`---\n\n*由法規備考地圖匯出 · Hsuannn*\n`;
+  document.getElementById("exp-text").value=md;
+  document.getElementById("exp-modal").style.display="block";
+}
+function closeExport(){document.getElementById("exp-modal").style.display="none";}
+function copyExport(){
+  const ta=document.getElementById("exp-text");
+  try{navigator.clipboard.writeText(ta.value);}catch(e){ta.select();document.execCommand("copy");}
+  const btn=document.getElementById("exp-copy");btn.textContent="✓ 已複製";btn.style.background="var(--s2-bg)";
+  setTimeout(()=>{btn.textContent="複製全部";btn.style.background="";},2000);
+}
+
+// ── JSON 備份 / 還原 ──────────────────────────────────────
+function openJsonExport(){
+  const data={v:6,read:[...S.read],mat:S.mat,err:[...S.err]};
+  document.getElementById("json-exp-text").value=JSON.stringify(data);
+  document.getElementById("json-exp-modal").style.display="block";
+}
+function copyJsonExport(){
+  const ta=document.getElementById("json-exp-text");
+  try{navigator.clipboard.writeText(ta.value);}catch(e){ta.select();document.execCommand("copy");}
+  const btn=document.getElementById("json-exp-copy");btn.textContent="✓ 已複製";
+  setTimeout(()=>{btn.textContent="複製全部";},2000);
+}
+function openJsonImport(){
+  document.getElementById("json-imp-text").value="";
+  document.getElementById("json-imp-err").textContent="";
+  document.getElementById("json-imp-modal").style.display="block";
+}
+function doJsonImport(){
+  const errEl=document.getElementById("json-imp-err");
+  errEl.textContent="";
+  try{
+    const raw=document.getElementById("json-imp-text").value.trim();
+    if(!raw){errEl.textContent="請先貼上備份的 JSON 文字";return;}
+    const d=JSON.parse(raw);
+    if(d.v!==6||!Array.isArray(d.read)||typeof d.mat!=="object"||!Array.isArray(d.err)){
+      errEl.textContent="格式不符，請確認是從「備份進度」複製的文字";return;
+    }
+    S.read=new Set(d.read.map(Number));
+    S.mat=d.mat;
+    S.err=new Set(d.err);
+    saveAll();
+    document.getElementById("json-imp-modal").style.display="none";
+    render();
+    alert("✓ 進度已還原成功！");
+  }catch(e){
+    errEl.textContent="無法解析，請確認文字完整未遭截斷";
+  }
+}
+
+// ── Render ────────────────────────────────────────────────
+function render(){
+  updateHdr();
+  if(S.detailV==="t"){ renderTopics(); return; }
+  if(S.mainV==="sprint"){ renderSprint(); return; }
+  S.mainV==="freq" ? renderFreq() : renderGroups();
+}
+
+// ── Service Worker (PWA offline) ─────────────────────────
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("./sw.js").catch(e=>console.log("SW:",e));
+  });
+}
+
+// ── Install guide (iOS) ───────────────────────────────────
+(function(){
+  var isPWA=window.navigator.standalone===true||window.matchMedia("(display-mode:standalone)").matches;
+  var dismissed=localStorage.getItem("law_ig");
+  var isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  if(!isIOS||isPWA||dismissed) return;
+  var ov=document.createElement("div");
+  ov.id="law-ig";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:0 16px 32px";
+  ov.innerHTML='<div style="background:#FFF;border-radius:14px;padding:24px 20px;width:100%;max-width:440px"><div style="font-size:17px;font-weight:600;margin-bottom:6px">加入手機桌面</div><div style="font-size:13px;color:#6b6b67;margin-bottom:20px;line-height:1.6">加入後可完全離線使用，進度存本機不上傳。</div><div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px"><div style="display:flex;gap:12px;align-items:flex-start"><div style="width:24px;height:24px;border-radius:50%;background:#2C2820;color:#FAF9F7;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div><div style="font-size:14px;line-height:1.6">點 Safari 下方工具列的 <strong>分享按鈕</strong>（方塊加箭頭）</div></div><div style="display:flex;gap:12px;align-items:flex-start"><div style="width:24px;height:24px;border-radius:50%;background:#2C2820;color:#FAF9F7;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div><div style="font-size:14px;line-height:1.6">向下捲動，點選 <strong>「加入主畫面」</strong></div></div><div style="display:flex;gap:12px;align-items:flex-start"><div style="width:24px;height:24px;border-radius:50%;background:#2C2820;color:#FAF9F7;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div><div style="font-size:14px;line-height:1.6">右上角點 <strong>「新增」</strong>，從桌面開啟即可離線使用</div></div></div><button onclick="localStorage.setItem('law_ig','1');document.getElementById('law-ig').remove()" style="width:100%;padding:14px;border-radius:9px;border:none;background:#2C2820;color:#FAF9F7;font-size:15px;font-weight:600;cursor:pointer">先繼續使用</button></div>';
+  document.body.appendChild(ov);
+})();
+
+load(); render();
+</script>
+</body>
+</html>

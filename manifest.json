@@ -1,0 +1,18 @@
+{
+  "name": "法規備考地圖",
+  "short_name": "法規備考",
+  "description": "建築師考試法規備考工具，近10年校正版",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#2C2820",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
